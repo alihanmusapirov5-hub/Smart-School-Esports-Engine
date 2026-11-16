@@ -1,0 +1,3053 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart School & Esports Organizer — Elo, Swiss, Arena TV & Duty Roster</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- canvas-confetti via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <!-- qrcodejs via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #020617; /* slate-950 */
+      color: #f8fafc; /* slate-50 */
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* SVG Connector Path Styling */
+    .bracket-svg-path {
+      fill: none;
+      stroke: #334155;
+      stroke-width: 2px;
+      transition: stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+    }
+    .bracket-svg-path.highlighted {
+      stroke: #6366f1;
+      stroke-width: 3.5px;
+      filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.85));
+      z-index: 20;
+    }
+    .bracket-svg-path.dimmed {
+      opacity: 0.25;
+    }
+    .match-card-item {
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .match-card-item.team-hovered {
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 18px -2px rgba(99, 102, 241, 0.45);
+    }
+
+    /* Print Styles for A4 */
+    @media print {
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-card {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #94a3b8 !important;
+        color: #000000 !important;
+        padding: 6px 8px !important;
+      }
+      input, select {
+        border: none !important;
+        background: transparent !important;
+        color: #000000 !important;
+        appearance: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- TOP NAVIGATION BAR                         -->
+  <!-- ========================================== -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <!-- Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-inner">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-bold tracking-tight text-slate-100 leading-tight">
+              Smart School & Esports Engine
+            </h1>
+            <span class="hidden md:inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              PRO ELO + SWISS
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Турнирный движок (Elo, Swiss, Arena TV) и Умный график дежурств</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <nav class="flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800">
+        <button id="tab-btn-tournament" onclick="switchTab('tournament')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 bg-indigo-600 text-white shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4m-5.2-9.6A7.96 7.96 0 014 5V4h16v1c0 2.5-.8 4.8-2.8 6.4M6 17h12a2 2 0 002-2v-1a2 2 0 00-2-2H6a2 2 0 00-2 2v1a2 2 0 002 2z"/>
+          </svg>
+          <span>Турнирные сетки</span>
+        </button>
+        <button id="tab-btn-duty" onclick="switchTab('duty')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 text-slate-400 hover:text-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>График дежурств</span>
+        </button>
+      </nav>
+
+      <!-- Right Controls: Arena TV Mode & Global Reset -->
+      <div class="flex items-center gap-2">
+        <button
+          onclick="openArenaModal()"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-200 bg-indigo-600/25 hover:bg-indigo-600/40 border border-indigo-500/40 shadow-sm transition"
+        >
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span>Режим Проектора (Arena TV)</span>
+        </button>
+        <button
+          onclick="resetAllData()"
+          title="Очистить localStorage и сбросить все данные"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          <span class="hidden xl:inline">Сбросить всё</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- MODE 1: ТУРНИРНЫЕ СЕТКИ & ELO ENGINE       -->
+    <!-- ========================================== -->
+    <section id="section-tournament" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Input & Elo Management Panel (4 cols on lg) -->
+        <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-lg no-print">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-base font-semibold text-slate-100">Конфигуратор турнира</h2>
+              <p class="text-xs text-slate-400">Рейтинги Elo, умный посев и форматы</p>
+            </div>
+            <span id="team-count-badge" class="px-2.5 py-0.5 text-xs font-mono font-semibold rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              0 команд
+            </span>
+          </div>
+
+          <!-- Participants Textarea -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <label for="tournament-teams-input" class="text-xs font-medium text-slate-300">
+                Команды (1 в строке, можно `Имя | Elo`)
+              </label>
+              <button type="button" onclick="loadDemoTeamsWithElo()" class="text-xs font-medium text-indigo-400 hover:text-indigo-300 underline decoration-indigo-500/40 underline-offset-2 transition">
+                Демо: 8 команд (Elo 850–1480)
+              </button>
+            </div>
+            <textarea
+              id="tournament-teams-input"
+              rows="6"
+              oninput="onTournamentInputChange()"
+              placeholder="10А «Молния» | 1420&#10;11Б «Спарта» | 1350&#10;9В «Орион» | 1000"
+              class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-xs sm:text-sm font-mono text-slate-100 placeholder-slate-600 p-3 transition outline-none resize-y"
+            ></textarea>
+          </div>
+
+          <!-- Editable Live Elo Table -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-300">Начальный рейтинг Elo (K=32)</span>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="assignPresetRealisticElo()" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 transition">
+                  Пресет 800–1500
+                </button>
+                <button type="button" onclick="resetAllEloTo1000()" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition">
+                  Все = 1000
+                </button>
+              </div>
+            </div>
+            <div id="elo-editor-list" class="max-h-48 overflow-y-auto space-y-1.5 pr-1 rounded-lg bg-slate-950/70 p-2 border border-slate-800/80">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Tournament Format Selector -->
+          <div class="space-y-1.5">
+            <label for="tournament-format" class="text-xs font-medium text-slate-300">
+              Турнирная система
+            </label>
+            <select
+              id="tournament-format"
+              onchange="onTournamentInputChange()"
+              class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-xs sm:text-sm text-slate-100 px-3 py-2.5 outline-none transition"
+            >
+              <option value="single">Олимпийская система (Single Elimination + Smart Seeding)</option>
+              <option value="swiss">Швейцарская система (Swiss Format — как в CS2 / Шахматах)</option>
+              <option value="roundrobin">Круговой турнир (Round Robin — все со всеми)</option>
+            </select>
+          </div>
+
+          <!-- Seeding / Shuffle Mode -->
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+              <input
+                id="tournament-smart-seed"
+                type="checkbox"
+                checked
+                onchange="onSeedingModeToggle('smart')"
+                class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500"
+              />
+              <div class="text-xs">
+                <div class="font-medium text-slate-200">Умный посев по Elo (Smart Seeding)</div>
+                <div class="text-slate-400">Топ-1 и Топ-2 встретятся только в Финале</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+              <input
+                id="tournament-shuffle"
+                type="checkbox"
+                onchange="onSeedingModeToggle('shuffle')"
+                class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500"
+              />
+              <div class="text-xs">
+                <div class="font-medium text-slate-200">Случайная жеребьевка (Слепой жребий)</div>
+                <div class="text-slate-400">Перемешать участников без учёта рейтинга</div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Generate Button -->
+          <button
+            type="button"
+            onclick="generateTournament()"
+            class="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-950/50 flex items-center justify-center gap-2 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span>Сгенерировать турнир</span>
+          </button>
+        </div>
+
+        <!-- Right Output Panel (8 cols on lg) -->
+        <div class="lg:col-span-8 space-y-5">
+          <!-- Action Bar -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span id="tournament-mode-label" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Сетка турнира
+              </span>
+              <span id="tournament-subtitle" class="text-xs text-slate-400">
+                Наведите на команду для подсветки пути • Введите счёт для пересчёта Elo
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                onclick="exportTournamentPNG()"
+                id="btn-export-png"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition"
+              >
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Скачать PNG</span>
+              </button>
+              <button
+                type="button"
+                onclick="exportTournamentCSV()"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition"
+              >
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Скачать CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bracket / Swiss / Round Robin Exportable Container -->
+          <div id="tournament-capture-area" class="bg-slate-900 border border-slate-800 rounded-xl p-6 overflow-x-auto min-h-[420px] relative print-card">
+            <div id="tournament-view-content" class="relative">
+              <!-- Populated dynamically by JS -->
+            </div>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- ANALYTICS DASHBOARD (ELO & STATS)          -->
+          <!-- ========================================== -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 no-print">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-100">Аналитическая панель турнира (Esports Analytics)</h3>
+                  <p class="text-xs text-slate-400">Автоматический анализ апсетов, результативности и динамики рейтинга Elo</p>
+                </div>
+              </div>
+              <span id="analytics-matches-counter" class="text-xs font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded border border-slate-800">
+                Сыграно матчей: 0
+              </span>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Card 1: Biggest Upset -->
+              <div class="rounded-xl bg-slate-950 border border-slate-800/90 p-4 space-y-1.5">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                  <span>⚡ Главный апсет турнира</span>
+                  <span class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 font-mono text-[10px]">UPSET</span>
+                </div>
+                <div id="stat-biggest-upset-title" class="text-sm font-bold text-slate-100 truncate">
+                  Нет завершённых апсетов
+                </div>
+                <div id="stat-biggest-upset-desc" class="text-xs text-slate-400">
+                  Победа андердога с наименьшим шансом на успех
+                </div>
+              </div>
+
+              <!-- Card 2: Highest Scoring Team -->
+              <div class="rounded-xl bg-slate-950 border border-slate-800/90 p-4 space-y-1.5">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                  <span>🔥 Самая результативная команда</span>
+                  <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px]">TOP SCORE</span>
+                </div>
+                <div id="stat-top-scorer-title" class="text-sm font-bold text-slate-100 truncate">
+                  Ожидание результатов...
+                </div>
+                <div id="stat-top-scorer-desc" class="text-xs text-slate-400">
+                  Сумма набранных очков / голов во всех матчах
+                </div>
+              </div>
+
+              <!-- Card 3: Biggest Elo Climber -->
+              <div class="rounded-xl bg-slate-950 border border-slate-800/90 p-4 space-y-1.5">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                  <span>📈 Лидер прироста Elo</span>
+                  <span class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px]">MVP ELO</span>
+                </div>
+                <div id="stat-elo-leader-title" class="text-sm font-bold text-slate-100 truncate">
+                  Ожидание результатов...
+                </div>
+                <div id="stat-elo-leader-desc" class="text-xs text-slate-400">
+                  Максимальный прирост рейтинга за турнир
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart.js Rating Progression Graph -->
+            <div class="rounded-xl bg-slate-950 border border-slate-800/90 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">График прогрессии рейтинга Elo (по турам / матчам)</span>
+                <span class="text-[11px] text-slate-500 font-mono">Формула: E = 1 / (1 + 10^((Rb - Ra)/400)), K=32</span>
+              </div>
+              <div class="h-64 w-full relative">
+                <canvas id="elo-progression-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- MODE 2: ГРАФИК ДЕЖУРСТВ (DUTY ROSTER)      -->
+    <!-- ========================================== -->
+    <section id="section-duty" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Input Panel (4 cols on lg) -->
+        <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5 shadow-lg no-print">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-base font-semibold text-slate-100">Параметры дежурств</h2>
+              <p class="text-xs text-slate-400">Равномерное распределение без повторов подряд</p>
+            </div>
+            <span id="student-count-badge" class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              0 уч.
+            </span>
+          </div>
+
+          <!-- Students Textarea -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="duty-students-input" class="text-xs font-medium text-slate-300">
+                Список учеников (по одному в строке)
+              </label>
+              <button type="button" onclick="loadDemoStudents()" class="text-xs font-medium text-indigo-400 hover:text-indigo-300 underline decoration-indigo-500/40 underline-offset-2 transition">
+                Демо-список класса
+              </button>
+            </div>
+            <textarea
+              id="duty-students-input"
+              rows="8"
+              oninput="onDutyInputChange()"
+              placeholder="Иванов Алексей&#10;Смирнова Мария&#10;Кузнецов Дмитрий..."
+              class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-100 placeholder-slate-600 p-3 transition outline-none resize-y"
+            ></textarea>
+          </div>
+
+          <!-- Configuration Inputs -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <label for="duty-days-input" class="text-xs font-medium text-slate-300">
+                Количество дней/смен
+              </label>
+              <input
+                id="duty-days-input"
+                type="number"
+                min="1"
+                max="90"
+                value="14"
+                onchange="onDutyInputChange()"
+                class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-100 px-3 py-2 outline-none"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="duty-per-shift-input" class="text-xs font-medium text-slate-300">
+                Человек в смене
+              </label>
+              <input
+                id="duty-per-shift-input"
+                type="number"
+                min="1"
+                max="10"
+                value="2"
+                onchange="onDutyInputChange()"
+                class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-100 px-3 py-2 outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Start Date Input -->
+          <div class="space-y-1.5">
+            <label for="duty-start-date" class="text-xs font-medium text-slate-300">
+              Дата начала графика
+            </label>
+            <input
+              id="duty-start-date"
+              type="date"
+              onchange="onDutyInputChange()"
+              class="w-full rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-slate-100 px-3 py-2 outline-none"
+            />
+          </div>
+
+          <!-- Exclude Sunday Checkbox -->
+          <label class="flex items-center gap-3 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+            <input
+              id="duty-exclude-sunday"
+              type="checkbox"
+              checked
+              onchange="onDutyInputChange()"
+              class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-950"
+            />
+            <div class="text-xs">
+              <div class="font-medium text-slate-200">Исключить выходные (Вс)</div>
+              <div class="text-slate-400">Пропускать воскресенья при расчете дат</div>
+            </div>
+          </label>
+
+          <!-- Generate Roster Button -->
+          <button
+            type="button"
+            onclick="generateDutyRoster()"
+            class="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm shadow-md shadow-indigo-950/50 flex items-center justify-center gap-2 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            <span>Сформировать график</span>
+          </button>
+        </div>
+
+        <!-- Right Output Panel (8 cols on lg) -->
+        <div class="lg:col-span-8 space-y-5">
+          <!-- Action Bar -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Расписание смен
+              </span>
+              <span id="duty-fairness-badge" class="text-xs text-slate-400">
+                Баланс нагрузки: ±1 смена, без двух дней подряд
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                onclick="exportDutyCSV()"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition"
+              >
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Скачать CSV (Excel)</span>
+              </button>
+              <button
+                type="button"
+                onclick="window.print()"
+                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 transition"
+              >
+                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                <span>Печать (А4)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Header -->
+          <div class="hidden print-only mb-4 border-b border-slate-400 pb-2">
+            <h1 class="text-xl font-bold">График дежурств по классу</h1>
+            <p id="print-subtitle-date" class="text-sm text-slate-600"></p>
+          </div>
+
+          <!-- Schedule Table Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden print-card">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 bg-slate-950/60 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4 w-14">#</th>
+                    <th class="py-3 px-4 w-44">Дата / День</th>
+                    <th class="py-3 px-4">Назначенные дежурные</th>
+                    <th class="py-3 px-4 w-64">Статус / Замена</th>
+                  </tr>
+                </thead>
+                <tbody id="duty-table-body" class="divide-y divide-slate-800/70 text-sm">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Fairness Summary Counter Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3 print-card">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-200">Сводка распределения нагрузки</h3>
+                <p class="text-xs text-slate-400">Итоговое количество смен на каждого ученика (контроль справедливости)</p>
+              </div>
+              <span id="duty-fairness-indicator" class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                Равномерно
+              </span>
+            </div>
+            <div id="duty-summary-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- ARENA TV PROJECTOR FULLSCREEN MODAL        -->
+  <!-- ========================================== -->
+  <div id="arena-tv-modal" class="fixed inset-0 z-50 hidden bg-slate-950/98 backdrop-blur-xl overflow-y-auto no-print">
+    <div class="max-w-7xl mx-auto px-6 py-6 min-h-screen flex flex-col justify-between gap-6">
+      <!-- Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
+          <span class="text-sm font-mono uppercase tracking-widest text-indigo-400 font-bold">ARENA TV // LIVE PROJECTOR MODE</span>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <select
+            id="arena-match-selector"
+            onchange="onArenaMatchSelect(this.value)"
+            class="rounded-lg bg-slate-900 border border-slate-700 text-xs sm:text-sm text-slate-100 px-3 py-2 outline-none focus:border-indigo-500"
+          >
+            <!-- Populated with active tournament matches -->
+          </select>
+          <button
+            onclick="triggerConfettiCelebration()"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition flex items-center gap-1.5"
+          >
+            <span>🎉 Салют Чемпиона</span>
+          </button>
+          <button
+            onclick="playArenaBuzzer()"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition flex items-center gap-1.5"
+          >
+            <span>🔊 Сирена (Buzzer)</span>
+          </button>
+          <button
+            onclick="toggleNativeFullscreen()"
+            class="px-3.5 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+          >
+            <span>⛶ Полный экран (F11)</span>
+          </button>
+          <button
+            onclick="closeArenaModal()"
+            class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white border border-slate-700 transition"
+          >
+            ✕ Закрыть
+          </button>
+        </div>
+      </div>
+
+      <!-- Center Main Scoreboard & Timer -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto">
+        <!-- Big Match Scoreboard (8 cols) -->
+        <div class="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-8">
+          <div class="flex items-center justify-between text-xs font-mono uppercase tracking-wider text-slate-400">
+            <span id="arena-match-stage">ГЛАВНЫЙ МАТЧ АРЕНЫ</span>
+            <span id="arena-elo-diff-label">ELO ПРОГНОЗ ПОБЕДЫ</span>
+          </div>
+
+          <!-- Teams & Big Score -->
+          <div class="grid grid-cols-11 items-center gap-4 text-center">
+            <!-- Team 1 -->
+            <div class="col-span-4 space-y-2">
+              <div id="arena-team1-name" class="text-xl sm:text-3xl font-extrabold text-white tracking-tight break-words">
+                Команда 1
+              </div>
+              <div id="arena-team1-elo" class="inline-block px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                1200 ELO
+              </div>
+              <div class="flex items-center justify-center gap-2 pt-2">
+                <button onclick="adjustArenaScore(1, -1)" class="w-8 h-8 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                <button onclick="adjustArenaScore(1, 1)" class="px-3 h-8 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">+1 Очко</button>
+              </div>
+            </div>
+
+            <!-- Score Numbers -->
+            <div class="col-span-3 flex items-center justify-center gap-3">
+              <span id="arena-score1" class="text-5xl sm:text-7xl font-mono font-extrabold text-white bg-slate-950 px-5 py-4 rounded-2xl border border-slate-800 shadow-inner">0</span>
+              <span class="text-3xl font-mono text-slate-600">:</span>
+              <span id="arena-score2" class="text-5xl sm:text-7xl font-mono font-extrabold text-white bg-slate-950 px-5 py-4 rounded-2xl border border-slate-800 shadow-inner">0</span>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="col-span-4 space-y-2">
+              <div id="arena-team2-name" class="text-xl sm:text-3xl font-extrabold text-white tracking-tight break-words">
+                Команда 2
+              </div>
+              <div id="arena-team2-elo" class="inline-block px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                1200 ELO
+              </div>
+              <div class="flex items-center justify-center gap-2 pt-2">
+                <button onclick="adjustArenaScore(2, -1)" class="w-8 h-8 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                <button onclick="adjustArenaScore(2, 1)" class="px-3 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">+1 Очко</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Win Probability Bar -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-mono font-semibold">
+              <span id="arena-prob1-text" class="text-indigo-400">50% шанс победы</span>
+              <span class="text-slate-500">ВЕРОЯТНОСТЬ ПО ФОРМУЛЕ ELO</span>
+              <span id="arena-prob2-text" class="text-emerald-400">50% шанс победы</span>
+            </div>
+            <div class="w-full h-3.5 bg-slate-950 rounded-full overflow-hidden flex border border-slate-800">
+              <div id="arena-prob1-bar" class="bg-indigo-500 h-full transition-all duration-300" style="width: 50%"></div>
+              <div id="arena-prob2-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 50%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Countdown Timer + Live Standings QR Code (4 cols) -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Timer Card -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-xl">
+            <div class="text-xs font-mono uppercase tracking-wider text-slate-400">Таймер раунда / матча</div>
+            <div id="arena-timer-display" class="text-5xl sm:text-6xl font-mono font-extrabold text-indigo-400 tracking-wider bg-slate-950 py-4 rounded-xl border border-slate-800">
+              05:00
+            </div>
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="toggleArenaTimer()" id="arena-timer-btn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">
+                ▶ Старт
+              </button>
+              <button onclick="resetArenaTimer(180)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono">
+                3:00
+              </button>
+              <button onclick="resetArenaTimer(300)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono">
+                5:00
+              </button>
+              <button onclick="resetArenaTimer(600)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono">
+                10:00
+              </button>
+            </div>
+          </div>
+
+          <!-- QR Code Card -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 shadow-xl">
+            <div id="arena-qrcode-box" class="bg-white p-2.5 rounded-xl shrink-0"></div>
+            <div class="space-y-1 text-left">
+              <div class="text-xs font-bold uppercase tracking-wider text-indigo-400">QR-сводка турнира</div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Отсканируйте камерой смартфона, чтобы получить актуальную таблицу лидеров и текущие рейтинги Elo.
+              </p>
+              <div id="arena-qr-caption" class="text-[11px] font-mono text-slate-500">Обновляется в реальном времени</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Ticker -->
+      <div class="border-t border-slate-800 pt-3 flex items-center justify-between text-xs text-slate-500 font-mono">
+        <span id="arena-bottom-summary">ТУРНИРНЫЙ ДВИЖОК АКТИВЕН</span>
+        <span>SMART SCHOOL & ESPORTS ORGANIZER</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none no-print"></div>
+
+  <!-- ========================================== -->
+  <!-- APPLICATION LOGIC (VANILLA JS)             -->
+  <!-- ========================================== -->
+  <script>
+    const STORAGE_KEY = 'smart_school_esports_organizer_v2';
+    const ELO_K_FACTOR = 32;
+
+    const DEMO_TEAMS_WITH_ELO = [
+      { name: '11А «Феникс»', elo: 1450 },
+      { name: '10Б «Титан»', elo: 1360 },
+      { name: '11Б «Спарта»', elo: 1280 },
+      { name: '10А «Молния»', elo: 1210 },
+      { name: '10В «Авангард»', elo: 1120 },
+      { name: '9А «Комета»', elo: 1040 },
+      { name: '9Б «Вихрь»', elo: 950 },
+      { name: '9В «Орион»', elo: 860 }
+    ];
+
+    const DEMO_STUDENTS = [
+      'Александров Артём',
+      'Белова Виктория',
+      'Воронов Максим',
+      'Громова Полина',
+      'Данилов Кирилл',
+      'Егорова Софья',
+      'Жуков Матвей',
+      'Зайцева Алиса',
+      'Иванов Александр',
+      'Козлова Дарья',
+      'Лебедев Илья',
+      'Морозова Анна'
+    ];
+
+    const DAY_NAMES_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const DAY_SHORT_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
+    let eloChartInstance = null;
+    let hoveredTeamName = null;
+
+    // Arena Timer State
+    let arenaTimerSeconds = 300;
+    let arenaTimerInterval = null;
+    let selectedArenaMatchKey = null;
+
+    function getDefaultState() {
+      const todayIso = new Date().toISOString().split('T')[0];
+      const baseRatings = {};
+      DEMO_TEAMS_WITH_ELO.forEach(t => { baseRatings[t.name] = t.elo; });
+
+      return {
+        activeTab: 'tournament',
+        tournament: {
+          rawTeams: DEMO_TEAMS_WITH_ELO.map(t => `${t.name} | ${t.elo}`).join('\n'),
+          baseRatings,      // { teamName: initialElo }
+          liveRatings: { ...baseRatings }, // { teamName: currentElo }
+          format: 'single', // 'single' | 'swiss' | 'roundrobin'
+          generatedFormat: 'single',
+          smartSeed: true,
+          shuffle: false,
+          singleElim: null,
+          roundRobin: null,
+          swiss: null       // { teams: [], totalRounds: 3, rounds: [ { roundNumber, matches: [ { id, t1, t2, s1, s2, isBye } ] } ] }
+        },
+        duty: {
+          rawStudents: DEMO_STUDENTS.join('\n'),
+          daysCount: 14,
+          perShift: 2,
+          startDate: todayIso,
+          excludeSunday: true,
+          schedule: [],
+          counts: {}
+        }
+      };
+    }
+
+    let appState = getDefaultState();
+
+    // ==========================================
+    // PERSISTENCE & INITIALIZATION
+    // ==========================================
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('localStorage save error:', e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const def = getDefaultState();
+          appState = {
+            ...def,
+            ...parsed,
+            tournament: {
+              ...def.tournament,
+              ...(parsed.tournament || {}),
+              baseRatings: { ...def.tournament.baseRatings, ...((parsed.tournament && parsed.tournament.baseRatings) || {}) }
+            },
+            duty: { ...def.duty, ...(parsed.duty || {}) }
+          };
+          return true;
+        }
+      } catch (e) {
+        console.warn('localStorage load error:', e);
+      }
+      return false;
+    }
+
+    function resetAllData() {
+      if (!confirm('Сбросить все настройки, рейтинги Elo, турнирные сетки и график дежурств к начальным демо-значениям?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      appState = getDefaultState();
+      syncInputsFromState();
+      generateTournament(true);
+      generateDutyRoster(true);
+      switchTab(appState.activeTab);
+      showToast('Все данные сброшены к заводским настройкам', 'info');
+    }
+
+    // ==========================================
+    // ELO MATH & PARTICIPANT PARSING
+    // ==========================================
+    function calcWinProbability(ratingA, ratingB) {
+      const rA = Number(ratingA) || 1000;
+      const rB = Number(ratingB) || 1000;
+      return 1 / (1 + Math.pow(10, (rB - rA) / 400));
+    }
+
+    function parseTeamsAndRatingsFromText(rawText) {
+      const lines = (rawText || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const seen = new Map();
+      const parsed = [];
+
+      for (const line of lines) {
+        let name = line;
+        let explicitElo = null;
+
+        if (line.includes('|')) {
+          const parts = line.split('|');
+          name = parts[0].trim();
+          const maybeNum = parseInt(parts[1].trim(), 10);
+          if (!isNaN(maybeNum)) explicitElo = Math.max(100, Math.min(3500, maybeNum));
+        }
+
+        if (!name) continue;
+        const c = seen.get(name) || 0;
+        seen.set(name, c + 1);
+        const uniqueName = c === 0 ? name : `${name} (${c + 1})`;
+
+        const storedElo = appState.tournament.baseRatings[uniqueName];
+        const elo = explicitElo !== null ? explicitElo : (storedElo !== undefined ? storedElo : 1000);
+        appState.tournament.baseRatings[uniqueName] = elo;
+        parsed.push({ name: uniqueName, elo });
+      }
+      return parsed;
+    }
+
+    function formatTeamsToTextarea(teamsList) {
+      return teamsList.map(t => `${t.name} | ${t.elo}`).join('\n');
+    }
+
+    function renderEloEditorList() {
+      const container = document.getElementById('elo-editor-list');
+      if (!container) return;
+      const teams = parseTeamsAndRatingsFromText(document.getElementById('tournament-teams-input').value);
+      document.getElementById('team-count-badge').textContent = `${teams.length} ком.`;
+
+      if (teams.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-2">Список пуст</div>`;
+        return;
+      }
+
+      container.innerHTML = teams.map((t, idx) => {
+        const live = (appState.tournament.liveRatings && appState.tournament.liveRatings[t.name]) ?? t.elo;
+        const delta = Math.round(live - t.elo);
+        const deltaBadge = delta > 0
+          ? `<span class="text-[10px] font-mono text-emerald-400">+${delta}</span>`
+          : (delta < 0 ? `<span class="text-[10px] font-mono text-rose-400">${delta}</span>` : '');
+
+        return `
+          <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-slate-900/90 border border-slate-800/80 text-xs">
+            <div class="flex items-center gap-2 truncate">
+              <span class="text-[10px] font-mono text-slate-500 w-4">${idx + 1}.</span>
+              <span class="truncate text-slate-200 font-medium" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>
+              ${deltaBadge}
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <input
+                type="number"
+                min="100"
+                max="3500"
+                step="10"
+                value="${t.elo}"
+                onchange="updateSingleTeamBaseElo('${escapeJsStr(t.name)}', this.value)"
+                class="w-16 text-right font-mono text-xs px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-indigo-300 focus:border-indigo-500 outline-none"
+              />
+              <span class="text-[10px] font-mono text-slate-500">ELO</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateSingleTeamBaseElo(teamName, newEloVal) {
+      const elo = Math.max(100, Math.min(3500, parseInt(newEloVal, 10) || 1000));
+      appState.tournament.baseRatings[teamName] = elo;
+
+      const currentTeams = parseTeamsAndRatingsFromText(document.getElementById('tournament-teams-input').value);
+      const updated = currentTeams.map(t => t.name === teamName ? { name: t.name, elo } : t);
+      const formatted = formatTeamsToTextarea(updated);
+      document.getElementById('tournament-teams-input').value = formatted;
+      appState.tournament.rawTeams = formatted;
+
+      recalculateAllEloAndAnalytics();
+      renderTournament();
+      renderEloEditorList();
+      saveState();
+    }
+
+    function assignPresetRealisticElo() {
+      const currentTeams = parseTeamsAndRatingsFromText(document.getElementById('tournament-teams-input').value);
+      if (currentTeams.length === 0) return;
+
+      const updated = currentTeams.map((t, i) => {
+        // Spread realistically between 1480 and 840
+        const step = currentTeams.length > 1 ? Math.round((1480 - 840) / (currentTeams.length - 1)) : 0;
+        const jitter = Math.floor(Math.random() * 30) - 15;
+        const elo = Math.max(800, Math.min(1500, 1480 - i * step + jitter));
+        appState.tournament.baseRatings[t.name] = elo;
+        return { name: t.name, elo };
+      });
+
+      const formatted = formatTeamsToTextarea(updated);
+      document.getElementById('tournament-teams-input').value = formatted;
+      appState.tournament.rawTeams = formatted;
+      recalculateAllEloAndAnalytics();
+      renderTournament();
+      renderEloEditorList();
+      saveState();
+      showToast('Назначены реалистичные рейтинги Elo (800–1500)');
+    }
+
+    function resetAllEloTo1000() {
+      const currentTeams = parseTeamsAndRatingsFromText(document.getElementById('tournament-teams-input').value);
+      const updated = currentTeams.map(t => {
+        appState.tournament.baseRatings[t.name] = 1000;
+        return { name: t.name, elo: 1000 };
+      });
+      const formatted = formatTeamsToTextarea(updated);
+      document.getElementById('tournament-teams-input').value = formatted;
+      appState.tournament.rawTeams = formatted;
+      recalculateAllEloAndAnalytics();
+      renderTournament();
+      renderEloEditorList();
+      saveState();
+      showToast('Все стартовые рейтинги установлены на 1000 Elo');
+    }
+
+    function loadDemoTeamsWithElo() {
+      appState.tournament.baseRatings = {};
+      DEMO_TEAMS_WITH_ELO.forEach(t => { appState.tournament.baseRatings[t.name] = t.elo; });
+      const text = formatTeamsToTextarea(DEMO_TEAMS_WITH_ELO);
+      document.getElementById('tournament-teams-input').value = text;
+      appState.tournament.rawTeams = text;
+      onTournamentInputChange();
+      generateTournament();
+      showToast('Загружены 8 демо-команд с рейтингами Elo');
+    }
+
+    function onSeedingModeToggle(which) {
+      const smartEl = document.getElementById('tournament-smart-seed');
+      const shufEl = document.getElementById('tournament-shuffle');
+      if (which === 'smart' && smartEl.checked) {
+        shufEl.checked = false;
+      } else if (which === 'shuffle' && shufEl.checked) {
+        smartEl.checked = false;
+      }
+      onTournamentInputChange();
+    }
+
+    function syncInputsFromState() {
+      document.getElementById('tournament-teams-input').value = appState.tournament.rawTeams || '';
+      document.getElementById('tournament-format').value = appState.tournament.format || 'single';
+      document.getElementById('tournament-smart-seed').checked = appState.tournament.smartSeed !== false;
+      document.getElementById('tournament-shuffle').checked = !!appState.tournament.shuffle;
+      renderEloEditorList();
+
+      document.getElementById('duty-students-input').value = appState.duty.rawStudents || '';
+      document.getElementById('duty-days-input').value = appState.duty.daysCount || 14;
+      document.getElementById('duty-per-shift-input').value = appState.duty.perShift || 2;
+      document.getElementById('duty-start-date').value = appState.duty.startDate || new Date().toISOString().split('T')[0];
+      document.getElementById('duty-exclude-sunday').checked = appState.duty.excludeSunday !== false;
+      updateStudentCountBadge();
+    }
+
+    function switchTab(tab) {
+      appState.activeTab = tab;
+      const secTournament = document.getElementById('section-tournament');
+      const secDuty = document.getElementById('section-duty');
+      const btnTournament = document.getElementById('tab-btn-tournament');
+      const btnDuty = document.getElementById('tab-btn-duty');
+
+      if (tab === 'tournament') {
+        secTournament.classList.remove('hidden');
+        secDuty.classList.add('hidden');
+        btnTournament.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 bg-indigo-600 text-white shadow-sm';
+        btnDuty.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 text-slate-400 hover:text-slate-200';
+        setTimeout(() => drawBracketSvgConnectors(), 60);
+      } else {
+        secTournament.classList.add('hidden');
+        secDuty.classList.remove('hidden');
+        btnDuty.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 bg-indigo-600 text-white shadow-sm';
+        btnTournament.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-150 text-slate-400 hover:text-slate-200';
+      }
+      saveState();
+    }
+
+    // ==========================================
+    // UTILITIES
+    // ==========================================
+    function parseLines(text) {
+      return (text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJsStr(str) {
+      return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = {
+        success: 'bg-slate-900 border-indigo-500/50 text-slate-100',
+        warn: 'bg-slate-900 border-amber-500/50 text-amber-200',
+        info: 'bg-slate-900 border-slate-700 text-slate-200'
+      };
+      el.className = `px-4 py-2.5 rounded-lg border shadow-xl text-xs font-medium flex items-center gap-2 transition-all duration-200 ${colors[type] || colors.success}`;
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(6px)';
+        setTimeout(() => el.remove(), 200);
+      }, 2600);
+    }
+
+    function downloadCSV(filename, rows) {
+      const processRow = row => row.map(val => {
+        const str = val === null || val === undefined ? '' : String(val);
+        const escaped = str.replace(/"/g, '""');
+        return `"${escaped}"`;
+      }).join(';');
+
+      const csvContent = '\uFEFF' + rows.map(processRow).join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // ==========================================
+    // SMART SEEDING & TOURNAMENT GENERATION
+    // ==========================================
+    function onTournamentInputChange() {
+      appState.tournament.rawTeams = document.getElementById('tournament-teams-input').value;
+      appState.tournament.format = document.getElementById('tournament-format').value;
+      appState.tournament.smartSeed = document.getElementById('tournament-smart-seed').checked;
+      appState.tournament.shuffle = document.getElementById('tournament-shuffle').checked;
+      renderEloEditorList();
+      saveState();
+    }
+
+    /**
+     * Generates standard tournament bracket seed order of size `pow2` (e.g. [0, 7, 3, 4, 1, 6, 2, 5] for 8)
+     * Guarantees Seed #1 and Seed #2 are placed in opposite halves and can only meet in the Final,
+     * and Top 4 seeds can only meet in the Semifinals.
+     */
+    function generateBracketSeedOrder(pow2) {
+      let rounds = Math.log2(pow2);
+      let seeds = [0, 1];
+      for (let r = 1; r < rounds; r++) {
+        const next = [];
+        const sum = Math.pow(2, r + 1) - 1;
+        for (const s of seeds) {
+          next.push(s);
+          next.push(sum - s);
+        }
+        seeds = next;
+      }
+      return seeds;
+    }
+
+    function generateTournament(silent = false) {
+      onTournamentInputChange();
+      let parsedTeams = parseTeamsAndRatingsFromText(appState.tournament.rawTeams);
+
+      if (parsedTeams.length < 2) {
+        if (!silent) showToast('Введите минимум 2 команды для создания турнира', 'warn');
+        return;
+      }
+
+      if (appState.tournament.shuffle) {
+        parsedTeams = shuffleArray(parsedTeams);
+      } else if (appState.tournament.smartSeed) {
+        // Sort descending by Elo rating so highest Elo is Seed #1
+        parsedTeams.sort((a, b) => b.elo - a.elo);
+      }
+
+      const teamNames = parsedTeams.map(t => t.name);
+      appState.tournament.generatedFormat = appState.tournament.format;
+
+      if (appState.tournament.format === 'single') {
+        appState.tournament.singleElim = buildSingleElimination(teamNames);
+      } else if (appState.tournament.format === 'swiss') {
+        appState.tournament.swiss = buildSwissTournament(teamNames);
+      } else {
+        appState.tournament.roundRobin = buildRoundRobin(teamNames);
+      }
+
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      if (!silent) showToast('Турнир успешно сгенерирован с учётом рейтинга Elo');
+    }
+
+    // ==========================================
+    // 1. SINGLE ELIMINATION WITH SMART SEEDING
+    // ==========================================
+    function getRoundTitle(matchesInRound, roundIdx) {
+      if (matchesInRound === 1) return 'Финал';
+      if (matchesInRound === 2) return '1/2 финала';
+      if (matchesInRound === 4) return '1/4 финала';
+      if (matchesInRound === 8) return '1/8 финала';
+      if (matchesInRound === 16) return '1/16 финала';
+      return `Раунд ${roundIdx + 1}`;
+    }
+
+    function buildSingleElimination(teams) {
+      const n = teams.length;
+      let pow2 = 2;
+      while (pow2 < n) pow2 *= 2;
+
+      const totalRounds = Math.log2(pow2);
+      const seedOrder = generateBracketSeedOrder(pow2); // length = pow2
+
+      const rounds = [];
+      const firstRound = [];
+
+      for (let i = 0; i < pow2; i += 2) {
+        const idx1 = seedOrder[i];
+        const idx2 = seedOrder[i + 1];
+        const p1 = idx1 < n ? teams[idx1] : 'BYE';
+        const p2 = idx2 < n ? teams[idx2] : 'BYE';
+        const isBye = (p1 === 'BYE' || p2 === 'BYE');
+        let winner = null;
+        if (isBye) {
+          winner = p1 !== 'BYE' ? 1 : (p2 !== 'BYE' ? 2 : null);
+        }
+
+        firstRound.push({
+          id: `se_r0_m${i / 2}`,
+          p1,
+          p2,
+          seed1: idx1 < n ? idx1 + 1 : null,
+          seed2: idx2 < n ? idx2 + 1 : null,
+          s1: '',
+          s2: '',
+          winner,
+          isBye
+        });
+      }
+      rounds.push(firstRound);
+
+      for (let r = 1; r < totalRounds; r++) {
+        const count = Math.pow(2, totalRounds - 1 - r);
+        const rMatches = [];
+        for (let m = 0; m < count; m++) {
+          rMatches.push({
+            id: `se_r${r}_m${m}`,
+            p1: null,
+            p2: null,
+            s1: '',
+            s2: '',
+            winner: null,
+            isBye: false
+          });
+        }
+        rounds.push(rMatches);
+      }
+
+      propagateSingleElimination(rounds);
+      return { teams, rounds };
+    }
+
+    function propagateSingleElimination(rounds) {
+      for (let r = 0; r < rounds.length - 1; r++) {
+        const currRound = rounds[r];
+        const nextRound = rounds[r + 1];
+
+        for (let m = 0; m < currRound.length; m++) {
+          const match = currRound[m];
+          let advancingPlayer = null;
+          if (match.winner === 1) advancingPlayer = match.p1;
+          else if (match.winner === 2) advancingPlayer = match.p2;
+
+          const nextMatchIndex = Math.floor(m / 2);
+          const isTopSlot = (m % 2 === 0);
+          const nextMatch = nextRound[nextMatchIndex];
+
+          const prevValue = isTopSlot ? nextMatch.p1 : nextMatch.p2;
+          if (prevValue !== advancingPlayer) {
+            if (isTopSlot) nextMatch.p1 = advancingPlayer;
+            else nextMatch.p2 = advancingPlayer;
+
+            if (nextMatch.winner === (isTopSlot ? 1 : 2)) {
+              nextMatch.winner = null;
+            }
+          }
+        }
+      }
+    }
+
+    function selectBracketWinner(roundIdx, matchIdx, slot) {
+      const se = appState.tournament.singleElim;
+      if (!se) return;
+      const match = se.rounds[roundIdx][matchIdx];
+      if (!match || match.isBye) return;
+
+      const chosenPlayer = slot === 1 ? match.p1 : match.p2;
+      if (!chosenPlayer || chosenPlayer === 'BYE') return;
+
+      const wasWinner = match.winner;
+      match.winner = (match.winner === slot) ? null : slot;
+
+      // If user clicks winner and scores are empty, set default 1:0 or 0:1 so it's clear
+      if (match.winner !== null && match.s1 === '' && match.s2 === '') {
+        match.s1 = match.winner === 1 ? '1' : '0';
+        match.s2 = match.winner === 2 ? '1' : '0';
+      }
+
+      propagateSingleElimination(se.rounds);
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      renderEloEditorList();
+
+      // Celebrate if Final winner was just selected!
+      if (roundIdx === se.rounds.length - 1 && match.winner && wasWinner !== match.winner) {
+        triggerConfettiCelebration();
+      }
+    }
+
+    function updateBracketScore(roundIdx, matchIdx, slot, value) {
+      const se = appState.tournament.singleElim;
+      if (!se) return;
+      const match = se.rounds[roundIdx][matchIdx];
+      if (!match || match.isBye) return;
+
+      if (slot === 1) match.s1 = value;
+      else match.s2 = value;
+
+      const n1 = parseInt(match.s1, 10);
+      const n2 = parseInt(match.s2, 10);
+
+      if (!isNaN(n1) && !isNaN(n2) && match.p1 && match.p2) {
+        if (n1 > n2) match.winner = 1;
+        else if (n2 > n1) match.winner = 2;
+        propagateSingleElimination(se.rounds);
+      }
+
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      renderEloEditorList();
+    }
+
+    // ==========================================
+    // 2. SWISS SYSTEM ENGINE (CS2 / CHESS)
+    // ==========================================
+    function buildSwissTournament(teams) {
+      const n = teams.length;
+      // Recommended Swiss rounds: ceil(log2(n)) or minimum 3 for 6+ teams
+      const recRounds = Math.max(3, Math.min(n - 1, Math.ceil(Math.log2(n)) + 1));
+      const swissObj = {
+        teams: [...teams],
+        totalRounds: recRounds,
+        rounds: []
+      };
+      generateNextSwissRoundInternal(swissObj);
+      return swissObj;
+    }
+
+    function computeSwissStandings(swiss) {
+      const stats = {};
+      swiss.teams.forEach(t => {
+        stats[t] = {
+          team: t,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          gf: 0,
+          ga: 0,
+          points: 0,
+          buchholz: 0,
+          opponents: [],
+          hadBye: false
+        };
+      });
+
+      swiss.rounds.forEach(r => {
+        r.matches.forEach(m => {
+          if (m.isBye) {
+            const st = stats[m.t1];
+            if (st) {
+              st.played++;
+              st.won++;
+              st.points += 3;
+              st.gf += 1;
+              st.hadBye = true;
+            }
+            return;
+          }
+          const st1 = stats[m.t1];
+          const st2 = stats[m.t2];
+          if (!st1 || !st2) return;
+
+          st1.opponents.push(m.t2);
+          st2.opponents.push(m.t1);
+
+          if (m.s1 === '' || m.s2 === '' || m.s1 === null || m.s2 === null) return;
+          const s1 = parseInt(m.s1, 10);
+          const s2 = parseInt(m.s2, 10);
+          if (isNaN(s1) || isNaN(s2)) return;
+
+          st1.played++;
+          st2.played++;
+          st1.gf += s1;
+          st1.ga += s2;
+          st2.gf += s2;
+          st2.ga += s1;
+
+          if (s1 > s2) {
+            st1.won++;
+            st1.points += 3;
+            st2.lost++;
+          } else if (s2 > s1) {
+            st2.won++;
+            st2.points += 3;
+            st1.lost++;
+          } else {
+            st1.drawn++;
+            st2.drawn++;
+            st1.points += 1;
+            st2.points += 1;
+          }
+        });
+      });
+
+      // Compute Buchholz (sum of opponents' wins/points)
+      Object.values(stats).forEach(st => {
+        st.buchholz = st.opponents.reduce((acc, oppName) => {
+          return acc + (stats[oppName] ? stats[oppName].points : 0);
+        }, 0);
+      });
+
+      return Object.values(stats).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.buchholz !== a.buchholz) return b.buchholz - a.buchholz;
+        const diffA = a.gf - a.ga;
+        const diffB = b.gf - b.ga;
+        if (diffB !== diffA) return diffB - diffA;
+        const eloA = (appState.tournament.liveRatings && appState.tournament.liveRatings[a.team]) || 1000;
+        const eloB = (appState.tournament.liveRatings && appState.tournament.liveRatings[b.team]) || 1000;
+        return eloB - eloA;
+      });
+    }
+
+    /**
+     * Pairs teams with identical W-L / points records while preventing rematches using backtracking
+     */
+    function generateNextSwissRoundInternal(swiss) {
+      const roundNumber = swiss.rounds.length + 1;
+      const standings = computeSwissStandings(swiss);
+
+      // Build played history set
+      const playedPairs = new Set();
+      swiss.rounds.forEach(r => {
+        r.matches.forEach(m => {
+          if (!m.isBye && m.t1 && m.t2) {
+            playedPairs.add(`${m.t1}|||${m.t2}`);
+            playedPairs.add(`${m.t2}|||${m.t1}`);
+          }
+        });
+      });
+
+      const pool = standings.map(s => s.team);
+      let byeTeam = null;
+
+      // If odd number of teams, give BYE to lowest-ranked team without a previous BYE
+      if (pool.length % 2 !== 0) {
+        for (let i = pool.length - 1; i >= 0; i--) {
+          const st = standings[i];
+          if (!st.hadBye) {
+            byeTeam = pool.splice(i, 1)[0];
+            break;
+          }
+        }
+        if (!byeTeam) {
+          byeTeam = pool.pop();
+        }
+      }
+
+      // Backtracking matcher to pair adjacent score groups without rematches
+      function pairWithoutRematches(remaining) {
+        if (remaining.length === 0) return [];
+        const first = remaining[0];
+        for (let i = 1; i < remaining.length; i++) {
+          const candidate = remaining[i];
+          if (!playedPairs.has(`${first}|||${candidate}`)) {
+            const nextRemaining = remaining.slice(1, i).concat(remaining.slice(i + 1));
+            const subResult = pairWithoutRematches(nextRemaining);
+            if (subResult !== null) {
+              return [[first, candidate], ...subResult];
+            }
+          }
+        }
+        return null;
+      }
+
+      let pairs = pairWithoutRematches(pool);
+      if (!pairs) {
+        // Fallback if all possible combinations already played
+        pairs = [];
+        for (let i = 0; i < pool.length; i += 2) {
+          pairs.push([pool[i], pool[i + 1]]);
+        }
+      }
+
+      const matches = pairs.map((pair, idx) => ({
+        id: `sw_r${roundNumber - 1}_m${idx}`,
+        t1: pair[0],
+        t2: pair[1],
+        s1: '',
+        s2: '',
+        isBye: false
+      }));
+
+      if (byeTeam) {
+        matches.push({
+          id: `sw_r${roundNumber - 1}_bye`,
+          t1: byeTeam,
+          t2: 'BYE',
+          s1: '1',
+          s2: '0',
+          isBye: true
+        });
+      }
+
+      swiss.rounds.push({
+        roundNumber,
+        matches
+      });
+    }
+
+    function triggerNextSwissRound() {
+      const swiss = appState.tournament.swiss;
+      if (!swiss) return;
+
+      const lastRound = swiss.rounds[swiss.rounds.length - 1];
+      const unfinished = lastRound.matches.some(m => !m.isBye && (m.s1 === '' || m.s2 === ''));
+      if (unfinished) {
+        showToast(`Сначала введите результаты всех матчей Тура ${lastRound.roundNumber}`, 'warn');
+        return;
+      }
+
+      if (swiss.rounds.length >= swiss.teams.length - 1) {
+        showToast('Достигнуто максимальное число уникальных туров для этого числа команд', 'info');
+        return;
+      }
+
+      generateNextSwissRoundInternal(swiss);
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      showToast(`Сформирован Тур ${swiss.rounds.length} по Швейцарской системе (по балансу побед/поражений)`);
+    }
+
+    function updateSwissScore(roundIdx, matchIdx, slot, value) {
+      const swiss = appState.tournament.swiss;
+      if (!swiss) return;
+      const match = swiss.rounds[roundIdx].matches[matchIdx];
+      if (!match || match.isBye) return;
+
+      if (slot === 1) match.s1 = value;
+      else match.s2 = value;
+
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      renderEloEditorList();
+    }
+
+    // ==========================================
+    // 3. ROUND ROBIN ENGINE
+    // ==========================================
+    function buildRoundRobin(teams) {
+      const list = [...teams];
+      if (list.length % 2 !== 0) list.push('BYE');
+      const n = list.length;
+      const totalRounds = n - 1;
+      const half = n / 2;
+      const rounds = [];
+      const rotating = [...list];
+
+      for (let r = 0; r < totalRounds; r++) {
+        const matches = [];
+        for (let i = 0; i < half; i++) {
+          const t1 = rotating[i];
+          const t2 = rotating[n - 1 - i];
+          if (t1 !== 'BYE' && t2 !== 'BYE') {
+            matches.push({
+              id: `rr_r${r}_m${i}`,
+              t1: r % 2 === 0 ? t1 : t2,
+              t2: r % 2 === 0 ? t2 : t1,
+              s1: '',
+              s2: ''
+            });
+          }
+        }
+        rounds.push({ roundNumber: r + 1, matches });
+        const last = rotating.pop();
+        rotating.splice(1, 0, last);
+      }
+
+      return { teams: [...teams], rounds };
+    }
+
+    function updateRoundRobinScore(roundIdx, matchIdx, slot, value) {
+      const rr = appState.tournament.roundRobin;
+      if (!rr) return;
+      const match = rr.rounds[roundIdx].matches[matchIdx];
+      if (!match) return;
+
+      if (slot === 1) match.s1 = value;
+      else match.s2 = value;
+
+      recalculateAllEloAndAnalytics();
+      saveState();
+      renderTournament();
+      renderEloEditorList();
+    }
+
+    function computeRoundRobinStandings(rr) {
+      const stats = {};
+      rr.teams.forEach(t => {
+        stats[t] = { team: t, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, points: 0 };
+      });
+
+      rr.rounds.forEach(r => {
+        r.matches.forEach(m => {
+          if (m.s1 === '' || m.s2 === '' || m.s1 === null || m.s2 === null) return;
+          const s1 = parseInt(m.s1, 10);
+          const s2 = parseInt(m.s2, 10);
+          if (isNaN(s1) || isNaN(s2)) return;
+
+          const st1 = stats[m.t1];
+          const st2 = stats[m.t2];
+          if (!st1 || !st2) return;
+
+          st1.played++; st2.played++;
+          st1.gf += s1; st1.ga += s2;
+          st2.gf += s2; st2.ga += s1;
+
+          if (s1 > s2) { st1.won++; st1.points += 3; st2.lost++; }
+          else if (s1 < s2) { st2.won++; st2.points += 3; st1.lost++; }
+          else { st1.drawn++; st2.drawn++; st1.points += 1; st2.points += 1; }
+        });
+      });
+
+      return Object.values(stats).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        const diffA = a.gf - a.ga;
+        const diffB = b.gf - b.ga;
+        if (diffB !== diffA) return diffB - diffA;
+        return b.won - a.won;
+      });
+    }
+
+    // ==========================================
+    // ELO SIMULATION & ANALYTICS ENGINE
+    // ==========================================
+    function recalculateAllEloAndAnalytics() {
+      const parsedTeams = parseTeamsAndRatingsFromText(appState.tournament.rawTeams);
+      const currentElo = {};
+      const ratingHistory = {}; // { teamName: [elo0, elo1, ...] }
+      const scoreTotals = {};   // { teamName: { scored: 0, matches: 0 } }
+
+      parsedTeams.forEach(t => {
+        currentElo[t.name] = t.elo;
+        ratingHistory[t.name] = [t.elo];
+        scoreTotals[t.name] = { scored: 0, matches: 0 };
+      });
+
+      const format = appState.tournament.generatedFormat || appState.tournament.format;
+      let playedMatchesCount = 0;
+      let biggestUpset = null; // { winner, loser, winProb, eloDiff, scoreStr, stage }
+
+      const processMatchElo = (m, t1, t2, isFinished, actualScore1, numS1, numS2, stageLabel) => {
+        const rA = currentElo[t1] ?? 1000;
+        const rB = currentElo[t2] ?? 1000;
+        const expA = calcWinProbability(rA, rB);
+        const expB = 1 - expA;
+
+        m.preElo1 = Math.round(rA);
+        m.preElo2 = Math.round(rB);
+        m.prob1 = Math.round(expA * 100);
+        m.prob2 = 100 - m.prob1;
+        m.delta1 = 0;
+        m.delta2 = 0;
+
+        if (!isFinished || !t1 || !t2 || t1 === 'BYE' || t2 === 'BYE') return;
+
+        playedMatchesCount++;
+        const deltaA = Math.round(ELO_K_FACTOR * (actualScore1 - expA));
+        const deltaB = -deltaA;
+
+        m.delta1 = deltaA;
+        m.delta2 = deltaB;
+
+        currentElo[t1] = rA + deltaA;
+        currentElo[t2] = rB + deltaB;
+
+        if (!ratingHistory[t1]) ratingHistory[t1] = [rA];
+        if (!ratingHistory[t2]) ratingHistory[t2] = [rB];
+        ratingHistory[t1].push(currentElo[t1]);
+        ratingHistory[t2].push(currentElo[t2]);
+
+        if (!isNaN(numS1) && !isNaN(numS2)) {
+          if (!scoreTotals[t1]) scoreTotals[t1] = { scored: 0, matches: 0 };
+          if (!scoreTotals[t2]) scoreTotals[t2] = { scored: 0, matches: 0 };
+          scoreTotals[t1].scored += numS1;
+          scoreTotals[t1].matches++;
+          scoreTotals[t2].scored += numS2;
+          scoreTotals[t2].matches++;
+        }
+
+        // Check for Upset (underdog won with < 50% expected probability)
+        if (actualScore1 === 1 && expA < 0.495) {
+          const diff = rB - rA;
+          if (!biggestUpset || expA < biggestUpset.winProb) {
+            biggestUpset = {
+              winner: t1,
+              loser: t2,
+              winProb: expA,
+              eloDiff: Math.round(diff),
+              delta: deltaA,
+              stage: stageLabel
+            };
+          }
+        } else if (actualScore1 === 0 && expB < 0.495) {
+          const diff = rA - rB;
+          if (!biggestUpset || expB < biggestUpset.winProb) {
+            biggestUpset = {
+              winner: t2,
+              loser: t1,
+              winProb: expB,
+              eloDiff: Math.round(diff),
+              delta: deltaB,
+              stage: stageLabel
+            };
+          }
+        }
+      };
+
+      if (format === 'single' && appState.tournament.singleElim) {
+        const se = appState.tournament.singleElim;
+        se.rounds.forEach((roundMatches, rIdx) => {
+          const stage = getRoundTitle(roundMatches.length, rIdx);
+          roundMatches.forEach(m => {
+            if (m.isBye) return;
+            const n1 = parseInt(m.s1, 10);
+            const n2 = parseInt(m.s2, 10);
+            const hasWinner = m.winner === 1 || m.winner === 2;
+            const actual1 = m.winner === 1 ? 1 : (m.winner === 2 ? 0 : 0.5);
+            processMatchElo(m, m.p1, m.p2, hasWinner, actual1, n1, n2, stage);
+          });
+        });
+      } else if (format === 'swiss' && appState.tournament.swiss) {
+        const sw = appState.tournament.swiss;
+        sw.rounds.forEach(r => {
+          r.matches.forEach(m => {
+            if (m.isBye) return;
+            const n1 = parseInt(m.s1, 10);
+            const n2 = parseInt(m.s2, 10);
+            const finished = !isNaN(n1) && !isNaN(n2) && m.s1 !== '' && m.s2 !== '';
+            const actual1 = n1 > n2 ? 1 : (n2 > n1 ? 0 : 0.5);
+            processMatchElo(m, m.t1, m.t2, finished, actual1, n1, n2, `Тур ${r.roundNumber}`);
+          });
+        });
+      } else if (format === 'roundrobin' && appState.tournament.roundRobin) {
+        const rr = appState.tournament.roundRobin;
+        rr.rounds.forEach(r => {
+          r.matches.forEach(m => {
+            const n1 = parseInt(m.s1, 10);
+            const n2 = parseInt(m.s2, 10);
+            const finished = !isNaN(n1) && !isNaN(n2) && m.s1 !== '' && m.s2 !== '';
+            const actual1 = n1 > n2 ? 1 : (n2 > n1 ? 0 : 0.5);
+            processMatchElo(m, m.t1, m.t2, finished, actual1, n1, n2, `Тур ${r.roundNumber}`);
+          });
+        });
+      }
+
+      appState.tournament.liveRatings = currentElo;
+      updateAnalyticsDashboardUI(playedMatchesCount, biggestUpset, scoreTotals, currentElo, ratingHistory);
+    }
+
+    function updateAnalyticsDashboardUI(playedCount, biggestUpset, scoreTotals, currentElo, ratingHistory) {
+      const counterEl = document.getElementById('analytics-matches-counter');
+      if (counterEl) counterEl.textContent = `Сыграно матчей: ${playedCount}`;
+
+      // 1. Biggest Upset Card
+      const upsetTitle = document.getElementById('stat-biggest-upset-title');
+      const upsetDesc = document.getElementById('stat-biggest-upset-desc');
+      if (biggestUpset) {
+        const pct = Math.round(biggestUpset.winProb * 100);
+        upsetTitle.textContent = `${biggestUpset.winner} обыграл ${biggestUpset.loser}`;
+        upsetDesc.textContent = `Шанс до матча: всего ${pct}% (разница -${biggestUpset.eloDiff} Elo, прирост +${biggestUpset.delta})`;
+      } else {
+        upsetTitle.textContent = playedCount > 0 ? 'Фавориты побеждают без сенсаций' : 'Нет завершённых апсетов';
+        upsetDesc.textContent = 'Победа андердога с шансом < 50% появится здесь автоматически';
+      }
+
+      // 2. Highest Scoring Team Card
+      const scorerTitle = document.getElementById('stat-top-scorer-title');
+      const scorerDesc = document.getElementById('stat-top-scorer-desc');
+      const scorerEntries = Object.entries(scoreTotals).filter(([, v]) => v.scored > 0).sort((a, b) => b[1].scored - a[1].scored);
+      if (scorerEntries.length > 0) {
+        const [topTeam, data] = scorerEntries[0];
+        const avg = (data.scored / Math.max(1, data.matches)).toFixed(1);
+        scorerTitle.textContent = `${topTeam} — ${data.scored} очк.`;
+        scorerDesc.textContent = `Сыграно матчей: ${data.matches} (в среднем ${avg} за игру)`;
+      } else {
+        scorerTitle.textContent = 'Ожидание результатов...';
+        scorerDesc.textContent = 'Введите счёт матчей для подсчёта результативности';
+      }
+
+      // 3. Biggest Elo Climber
+      const eloTitle = document.getElementById('stat-elo-leader-title');
+      const eloDesc = document.getElementById('stat-elo-leader-desc');
+      const deltas = Object.keys(currentElo).map(name => ({
+        name,
+        cur: Math.round(currentElo[name]),
+        base: appState.tournament.baseRatings[name] || 1000,
+        diff: Math.round(currentElo[name] - (appState.tournament.baseRatings[name] || 1000))
+      })).sort((a, b) => b.diff - a.diff);
+
+      if (deltas.length > 0 && deltas[0].diff > 0) {
+        const best = deltas[0];
+        eloTitle.textContent = `${best.name} (+${best.diff} ELO)`;
+        eloDesc.textContent = `Текущий рейтинг: ${best.cur} Elo (старт: ${best.base} Elo)`;
+      } else {
+        eloTitle.textContent = deltas.length > 0 ? `${deltas[0].name} (${deltas[0].cur} ELO)` : 'Ожидание матчей...';
+        eloDesc.textContent = 'Динамика рейтинга обновится после завершения матчей';
+      }
+
+      // 4. Chart.js Progression Line Chart
+      renderEloProgressionChart(ratingHistory);
+    }
+
+    function renderEloProgressionChart(ratingHistory) {
+      const canvas = document.getElementById('elo-progression-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      const palette = [
+        '#6366f1', '#10b981', '#f59e0b', '#ec4899',
+        '#38bdf8', '#a855f7', '#ef4444', '#14b8a6',
+        '#eab308', '#64748b'
+      ];
+
+      const teamNames = Object.keys(ratingHistory);
+      const maxSteps = Math.max(2, ...teamNames.map(t => ratingHistory[t].length));
+      const labels = Array.from({ length: maxSteps }, (_, i) => i === 0 ? 'Старт' : `Игра ${i}`);
+
+      const datasets = teamNames.map((name, idx) => {
+        const hist = ratingHistory[name];
+        // Pad with last known rating so all lines span to current step
+        const padded = Array.from({ length: maxSteps }, (_, step) =>
+          step < hist.length ? Math.round(hist[step]) : Math.round(hist[hist.length - 1])
+        );
+        const color = palette[idx % palette.length];
+        return {
+          label: name,
+          data: padded,
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0.25
+        };
+      });
+
+      if (eloChartInstance) {
+        eloChartInstance.data.labels = labels;
+        eloChartInstance.data.datasets = datasets;
+        eloChartInstance.update();
+        return;
+      }
+
+      eloChartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // RENDERING TOURNAMENT VIEWS + SVG LINES
+    // ==========================================
+    function renderDeltaBadge(delta) {
+      if (!delta) return '';
+      if (delta > 0) {
+        return `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">+${delta}</span>`;
+      }
+      return `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">${delta}</span>`;
+    }
+
+    function renderTournament() {
+      const container = document.getElementById('tournament-view-content');
+      const modeLabel = document.getElementById('tournament-mode-label');
+      const subtitle = document.getElementById('tournament-subtitle');
+      const format = appState.tournament.generatedFormat || appState.tournament.format;
+
+      if (format === 'single') {
+        modeLabel.textContent = 'Олимпийская система (Single Elimination + Smart Seeding)';
+        subtitle.textContent = 'Наведите курсор на команду для подсветки её пути • Кликните на участника или введите счёт';
+
+        const se = appState.tournament.singleElim;
+        if (!se || !se.rounds || se.rounds.length === 0) {
+          container.innerHTML = `<div class="text-center py-16 text-slate-500 text-sm">Добавьте команды и нажмите «Сгенерировать турнир»</div>`;
+          return;
+        }
+
+        const totalRounds = se.rounds.length;
+        const finalMatch = se.rounds[totalRounds - 1][0];
+        const champion = finalMatch && finalMatch.winner === 1 ? finalMatch.p1 : (finalMatch && finalMatch.winner === 2 ? finalMatch.p2 : null);
+
+        let html = '';
+        if (champion) {
+          const champElo = Math.round((appState.tournament.liveRatings && appState.tournament.liveRatings[champion]) || 1000);
+          html += `
+            <div class="mb-6 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">🏆</span>
+                <div>
+                  <div class="text-xs font-mono uppercase tracking-wider text-indigo-300">Чемпион турнира</div>
+                  <div class="text-lg font-extrabold text-white">${escapeHtml(champion)} <span class="text-xs font-mono text-indigo-400 ml-1">(${champElo} ELO)</span></div>
+                </div>
+              </div>
+              <button onclick="triggerConfettiCelebration()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+                🎉 Запустить конфетти
+              </button>
+            </div>
+          `;
+        }
+
+        html += `
+          <div id="bracket-stage-wrapper" class="relative flex items-stretch gap-10 min-w-max pb-4">
+            <svg id="bracket-svg-overlay" class="absolute inset-0 pointer-events-none z-10 overflow-visible"></svg>
+        `;
+
+        se.rounds.forEach((roundMatches, rIdx) => {
+          const roundTitle = getRoundTitle(roundMatches.length, rIdx);
+          html += `
+            <div class="flex flex-col w-72 relative z-20">
+              <div class="mb-3 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-center">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">${escapeHtml(roundTitle)}</span>
+              </div>
+              <div class="flex flex-col justify-around flex-1 gap-4">
+          `;
+
+          roundMatches.forEach((match, mIdx) => {
+            const p1Name = match.p1 ? escapeHtml(match.p1) : 'Ожидание...';
+            const p2Name = match.p2 ? escapeHtml(match.p2) : 'Ожидание...';
+            const p1IsBye = match.p1 === 'BYE';
+            const p2IsBye = match.p2 === 'BYE';
+            const w1 = match.winner === 1;
+            const w2 = match.winner === 2;
+
+            const elo1 = match.preElo1 || (match.p1 && appState.tournament.liveRatings[match.p1]) || 1000;
+            const elo2 = match.preElo2 || (match.p2 && appState.tournament.liveRatings[match.p2]) || 1000;
+            const prob1 = match.prob1 ?? 50;
+            const prob2 = match.prob2 ?? 50;
+            const canShowProb = !match.isBye && match.p1 && match.p2 && !p1IsBye && !p2IsBye;
+
+            html += `
+              <div
+                id="bracket-card-${rIdx}-${mIdx}"
+                data-p1="${match.p1 ? escapeHtml(match.p1) : ''}"
+                data-p2="${match.p2 ? escapeHtml(match.p2) : ''}"
+                class="match-card-item relative w-full rounded-xl bg-slate-950 border ${match.isBye ? 'border-slate-800/50 opacity-75' : 'border-slate-800 hover:border-slate-700'} overflow-hidden shadow-lg"
+              >
+                <!-- Slot 1 -->
+                <div
+                  onmouseenter="onHoverTeam('${escapeJsStr(match.p1 || '')}')"
+                  onmouseleave="onHoverTeam(null)"
+                  class="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 ${w1 ? 'bg-indigo-500/15 text-white font-semibold' : 'text-slate-300'}"
+                >
+                  <button
+                    type="button"
+                    onclick="selectBracketWinner(${rIdx}, ${mIdx}, 1)"
+                    ${(!match.p1 || p1IsBye || match.isBye) ? 'disabled' : ''}
+                    class="flex-1 text-left text-xs truncate pr-2 flex items-center gap-1.5 ${(!match.p1 || p1IsBye) ? 'text-slate-500 italic cursor-default' : 'hover:text-indigo-300 cursor-pointer'}"
+                    title="${match.p1 ? escapeHtml(match.p1) : ''}"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full ${w1 ? 'bg-indigo-400' : 'bg-slate-700'} shrink-0"></span>
+                    <span class="truncate">${p1IsBye ? 'BYE (Автопроход)' : p1Name}</span>
+                    ${(!p1IsBye && match.p1) ? `<span class="text-[10px] font-mono text-slate-500 shrink-0">${Math.round(elo1)}</span>` : ''}
+                    ${renderDeltaBadge(match.delta1)}
+                  </button>
+                  ${!match.isBye ? `
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="-"
+                      value="${escapeHtml(match.s1)}"
+                      onchange="updateBracketScore(${rIdx}, ${mIdx}, 1, this.value)"
+                      class="w-11 text-center font-mono text-xs py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-100 focus:border-indigo-500 outline-none"
+                    />
+                  ` : `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400">АВТО</span>`}
+                </div>
+
+                <!-- Win Probability Bar -->
+                ${canShowProb ? `
+                  <div class="px-3 py-1 bg-slate-900/90 border-b border-slate-800/80 flex items-center gap-2">
+                    <span class="text-[10px] font-mono text-indigo-400 w-8">${prob1}%</span>
+                    <div class="flex-1 h-1.5 rounded-full bg-slate-950 overflow-hidden flex">
+                      <div class="bg-indigo-500 h-full" style="width: ${prob1}%"></div>
+                      <div class="bg-emerald-500 h-full" style="width: ${prob2}%"></div>
+                    </div>
+                    <span class="text-[10px] font-mono text-emerald-400 w-8 text-right">${prob2}%</span>
+                  </div>
+                ` : ''}
+
+                <!-- Slot 2 -->
+                <div
+                  onmouseenter="onHoverTeam('${escapeJsStr(match.p2 || '')}')"
+                  onmouseleave="onHoverTeam(null)"
+                  class="flex items-center justify-between px-3 py-2 ${w2 ? 'bg-indigo-500/15 text-white font-semibold' : 'text-slate-300'}"
+                >
+                  <button
+                    type="button"
+                    onclick="selectBracketWinner(${rIdx}, ${mIdx}, 2)"
+                    ${(!match.p2 || p2IsBye || match.isBye) ? 'disabled' : ''}
+                    class="flex-1 text-left text-xs truncate pr-2 flex items-center gap-1.5 ${(!match.p2 || p2IsBye) ? 'text-slate-500 italic cursor-default' : 'hover:text-indigo-300 cursor-pointer'}"
+                    title="${match.p2 ? escapeHtml(match.p2) : ''}"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full ${w2 ? 'bg-indigo-400' : 'bg-slate-700'} shrink-0"></span>
+                    <span class="truncate">${p2IsBye ? 'BYE (Автопроход)' : p2Name}</span>
+                    ${(!p2IsBye && match.p2) ? `<span class="text-[10px] font-mono text-slate-500 shrink-0">${Math.round(elo2)}</span>` : ''}
+                    ${renderDeltaBadge(match.delta2)}
+                  </button>
+                  ${!match.isBye ? `
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="-"
+                      value="${escapeHtml(match.s2)}"
+                      onchange="updateBracketScore(${rIdx}, ${mIdx}, 2, this.value)"
+                      class="w-11 text-center font-mono text-xs py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-100 focus:border-indigo-500 outline-none"
+                    />
+                  ` : `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-500">—</span>`}
+                </div>
+              </div>
+            `;
+          });
+
+          html += `
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+        requestAnimationFrame(() => drawBracketSvgConnectors());
+
+      } else if (format === 'swiss') {
+        // SWISS FORMAT VIEW
+        modeLabel.textContent = 'Швейцарская система (Swiss Format — CS2 / Шахматы)';
+        subtitle.textContent = 'Пары формируются по балансу Побед-Поражений (1-0 vs 1-0, 0-1 vs 0-1) без повторных встреч';
+
+        const sw = appState.tournament.swiss;
+        if (!sw || !sw.rounds) {
+          container.innerHTML = `<div class="text-center py-16 text-slate-500 text-sm">Нажмите «Сгенерировать турнир»</div>`;
+          return;
+        }
+
+        const standings = computeSwissStandings(sw);
+        const recordMap = {};
+        standings.forEach(s => { recordMap[s.team] = `${s.won}-${s.lost}`; });
+
+        let html = `
+          <div class="space-y-6">
+            <!-- Swiss Standings Table -->
+            <div>
+              <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                  <span>Таблица Швейцарской системы (с коэффициентом Бухгольца и рейтингом Elo)</span>
+                </h3>
+                <button
+                  onclick="triggerNextSwissRound()"
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow flex items-center gap-1.5 transition"
+                >
+                  <span>+ Сгенерировать Тур ${sw.rounds.length + 1} (по балансу W-L)</span>
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-800 bg-slate-900/80 text-slate-400 text-xs uppercase">
+                      <th class="py-2.5 px-3 w-10">#</th>
+                      <th class="py-2.5 px-3">Команда</th>
+                      <th class="py-2.5 px-3 text-center">Баланс (W-L)</th>
+                      <th class="py-2.5 px-3 text-center">Elo</th>
+                      <th class="py-2.5 px-3 text-center" title="Коэффициент Бухгольца (сумма очков соперников)">Бухгольц</th>
+                      <th class="py-2.5 px-3 text-center">Разница</th>
+                      <th class="py-2.5 px-3 text-center font-bold text-indigo-400">Очки</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/70">
+                    ${standings.map((st, idx) => {
+                      const curElo = Math.round((appState.tournament.liveRatings && appState.tournament.liveRatings[st.team]) || 1000);
+                      const baseElo = appState.tournament.baseRatings[st.team] || 1000;
+                      const diffElo = curElo - baseElo;
+                      return `
+                        <tr class="hover:bg-slate-900/50 transition">
+                          <td class="py-2.5 px-3 font-mono text-xs text-slate-400">${idx + 1}</td>
+                          <td class="py-2.5 px-3 font-semibold text-slate-100">${escapeHtml(st.team)}</td>
+                          <td class="py-2.5 px-3 text-center">
+                            <span class="px-2 py-0.5 rounded font-mono text-xs bg-slate-900 border border-slate-700 text-slate-200">${st.won}-${st.lost}${st.drawn ? `-${st.drawn}` : ''}</span>
+                          </td>
+                          <td class="py-2.5 px-3 text-center font-mono text-xs text-indigo-300">
+                            ${curElo} ${diffElo !== 0 ? (diffElo > 0 ? `<span class="text-emerald-400">(+${diffElo})</span>` : `<span class="text-rose-400">(${diffElo})</span>`) : ''}
+                          </td>
+                          <td class="py-2.5 px-3 text-center font-mono text-slate-300">${st.buchholz}</td>
+                          <td class="py-2.5 px-3 text-center font-mono text-slate-400">${st.gf}:${st.ga}</td>
+                          <td class="py-2.5 px-3 text-center font-bold text-indigo-400">${st.points}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Swiss Rounds Matches -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${sw.rounds.map((round, rIdx) => `
+                <div class="rounded-xl bg-slate-950 border border-slate-800 p-4 space-y-3">
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Швейцарский Тур ${round.roundNumber}</span>
+                    <span class="text-[11px] font-mono text-slate-500">Посев по корзинам W-L</span>
+                  </div>
+                  <div class="space-y-2.5">
+                    ${round.matches.map((m, mIdx) => {
+                      if (m.isBye) {
+                        return `
+                          <div class="p-2.5 rounded-lg bg-slate-900/50 border border-slate-800/70 flex items-center justify-between text-xs text-slate-400">
+                            <span>${escapeHtml(m.t1)}</span>
+                            <span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-mono text-[10px]">BYE (+3 очка)</span>
+                          </div>
+                        `;
+                      }
+                      const prob1 = m.prob1 ?? 50;
+                      const prob2 = m.prob2 ?? 50;
+                      return `
+                        <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
+                          <div class="flex items-center justify-between gap-2 text-xs">
+                            <div class="flex-1 truncate text-right">
+                              <span class="font-medium text-slate-100">${escapeHtml(m.t1)}</span>
+                              <div class="text-[10px] font-mono text-slate-500">${m.preElo1 || 1000} ELO ${renderDeltaBadge(m.delta1)}</div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="-"
+                                value="${escapeHtml(m.s1)}"
+                                onchange="updateSwissScore(${rIdx}, ${mIdx}, 1, this.value)"
+                                class="w-11 text-center font-mono py-1 rounded bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-500 outline-none"
+                              />
+                              <span class="text-slate-500 font-bold">:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="-"
+                                value="${escapeHtml(m.s2)}"
+                                onchange="updateSwissScore(${rIdx}, ${mIdx}, 2, this.value)"
+                                class="w-11 text-center font-mono py-1 rounded bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-500 outline-none"
+                              />
+                            </div>
+                            <div class="flex-1 truncate text-left">
+                              <span class="font-medium text-slate-100">${escapeHtml(m.t2)}</span>
+                              <div class="text-[10px] font-mono text-slate-500">${m.preElo2 || 1000} ELO ${renderDeltaBadge(m.delta2)}</div>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono text-indigo-400">${prob1}%</span>
+                            <div class="flex-1 h-1 rounded-full bg-slate-950 overflow-hidden flex">
+                              <div class="bg-indigo-500 h-full" style="width:${prob1}%"></div>
+                              <div class="bg-emerald-500 h-full" style="width:${prob2}%"></div>
+                            </div>
+                            <span class="text-[10px] font-mono text-emerald-400">${prob2}%</span>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        container.innerHTML = html;
+
+      } else {
+        // ROUND ROBIN VIEW
+        modeLabel.textContent = 'Круговой турнир (Round Robin + Elo)';
+        subtitle.textContent = 'Вводите счёт матчей — таблица и рейтинги Elo пересчитываются автоматически';
+
+        const rr = appState.tournament.roundRobin;
+        if (!rr || !rr.rounds) {
+          container.innerHTML = `<div class="text-center py-16 text-slate-500 text-sm">Нажмите «Сгенерировать турнир»</div>`;
+          return;
+        }
+
+        const standings = computeRoundRobinStandings(rr);
+
+        let html = `
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span>Турнирная таблица (Круговой турнир)</span>
+              </h3>
+              <div class="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-800 bg-slate-900/80 text-slate-400 text-xs uppercase">
+                      <th class="py-2.5 px-3 w-10">#</th>
+                      <th class="py-2.5 px-3">Команда</th>
+                      <th class="py-2.5 px-3 text-center">Elo</th>
+                      <th class="py-2.5 px-3 text-center">Игры</th>
+                      <th class="py-2.5 px-3 text-center">Победы</th>
+                      <th class="py-2.5 px-3 text-center">Ничьи</th>
+                      <th class="py-2.5 px-3 text-center">Поражения</th>
+                      <th class="py-2.5 px-3 text-center">Мячи</th>
+                      <th class="py-2.5 px-3 text-center font-bold text-indigo-400">Очки</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/70">
+                    ${standings.map((st, idx) => {
+                      const curElo = Math.round((appState.tournament.liveRatings && appState.tournament.liveRatings[st.team]) || 1000);
+                      return `
+                        <tr class="hover:bg-slate-900/50 transition">
+                          <td class="py-2.5 px-3 font-mono text-xs text-slate-400">${idx + 1}</td>
+                          <td class="py-2.5 px-3 font-medium text-slate-100">${escapeHtml(st.team)}</td>
+                          <td class="py-2.5 px-3 text-center font-mono text-xs text-indigo-300">${curElo}</td>
+                          <td class="py-2.5 px-3 text-center text-slate-300">${st.played}</td>
+                          <td class="py-2.5 px-3 text-center text-emerald-400 font-medium">${st.won}</td>
+                          <td class="py-2.5 px-3 text-center text-amber-300">${st.drawn}</td>
+                          <td class="py-2.5 px-3 text-center text-rose-400">${st.lost}</td>
+                          <td class="py-2.5 px-3 text-center text-slate-400">${st.gf}:${st.ga}</td>
+                          <td class="py-2.5 px-3 text-center font-bold text-indigo-400">${st.points}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${rr.rounds.map((round, rIdx) => `
+                <div class="rounded-lg bg-slate-950 border border-slate-800 p-3.5 space-y-2.5">
+                  <div class="text-xs font-semibold text-indigo-400 uppercase tracking-wider border-b border-slate-800 pb-1.5">
+                    Тур ${round.roundNumber}
+                  </div>
+                  <div class="space-y-2">
+                    ${round.matches.map((m, mIdx) => {
+                      const prob1 = m.prob1 ?? 50;
+                      const prob2 = m.prob2 ?? 50;
+                      return `
+                        <div class="p-2.5 rounded-md bg-slate-900/90 border border-slate-800/90 space-y-1.5">
+                          <div class="flex items-center justify-between gap-2 text-xs">
+                            <div class="flex-1 truncate text-right">
+                              <span class="font-medium text-slate-200">${escapeHtml(m.t1)}</span>
+                              <div class="text-[10px] font-mono text-slate-500">${m.preElo1 || 1000} ELO ${renderDeltaBadge(m.delta1)}</div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="-"
+                                value="${escapeHtml(m.s1)}"
+                                onchange="updateRoundRobinScore(${rIdx}, ${mIdx}, 1, this.value)"
+                                class="w-11 text-center font-mono py-1 rounded bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-500 outline-none"
+                              />
+                              <span class="text-slate-500 font-bold">:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="-"
+                                value="${escapeHtml(m.s2)}"
+                                onchange="updateRoundRobinScore(${rIdx}, ${mIdx}, 2, this.value)"
+                                class="w-11 text-center font-mono py-1 rounded bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-500 outline-none"
+                              />
+                            </div>
+                            <div class="flex-1 truncate text-left">
+                              <span class="font-medium text-slate-200">${escapeHtml(m.t2)}</span>
+                              <div class="text-[10px] font-mono text-slate-500">${m.preElo2 || 1000} ELO ${renderDeltaBadge(m.delta2)}</div>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono text-indigo-400">${prob1}%</span>
+                            <div class="flex-1 h-1 rounded-full bg-slate-950 overflow-hidden flex">
+                              <div class="bg-indigo-500 h-full" style="width:${prob1}%"></div>
+                              <div class="bg-emerald-500 h-full" style="width:${prob2}%"></div>
+                            </div>
+                            <span class="text-[10px] font-mono text-emerald-400">${prob2}%</span>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        container.innerHTML = html;
+      }
+    }
+
+    // ==========================================
+    // SVG DYNAMIC BRACKET CONNECTOR LINES & HOVER
+    // ==========================================
+    function drawBracketSvgConnectors() {
+      const svg = document.getElementById('bracket-svg-overlay');
+      const wrapper = document.getElementById('bracket-stage-wrapper');
+      const se = appState.tournament.singleElim;
+      if (!svg || !wrapper || !se || !se.rounds) return;
+
+      const wrapRect = wrapper.getBoundingClientRect();
+      svg.setAttribute('width', wrapper.scrollWidth);
+      svg.setAttribute('height', wrapper.scrollHeight);
+
+      let pathsHtml = '';
+
+      for (let r = 0; r < se.rounds.length - 1; r++) {
+        const currRound = se.rounds[r];
+        for (let m = 0; m < currRound.length; m++) {
+          const nextM = Math.floor(m / 2);
+          const fromEl = document.getElementById(`bracket-card-${r}-${m}`);
+          const toEl = document.getElementById(`bracket-card-${r + 1}-${nextM}`);
+          if (!fromEl || !toEl) continue;
+
+          const fromRect = fromEl.getBoundingClientRect();
+          const toRect = toEl.getBoundingClientRect();
+
+          const x1 = fromRect.right - wrapRect.left;
+          const y1 = fromRect.top + fromRect.height / 2 - wrapRect.top;
+          const x2 = toRect.left - wrapRect.left;
+          const y2 = toRect.top + toRect.height / 2 - wrapRect.top;
+          const midX = x1 + (x2 - x1) / 2;
+
+          const match = currRound[m];
+          const advancingTeam = match.winner === 1 ? match.p1 : (match.winner === 2 ? match.p2 : '');
+          const teamsInvolved = [match.p1, match.p2, advancingTeam].filter(Boolean);
+
+          const isHighlighted = hoveredTeamName && teamsInvolved.includes(hoveredTeamName) &&
+            (r === 0 || advancingTeam === hoveredTeamName || se.rounds[r][m].p1 === hoveredTeamName || se.rounds[r][m].p2 === hoveredTeamName);
+
+          const cls = hoveredTeamName
+            ? (isHighlighted ? 'bracket-svg-path highlighted' : 'bracket-svg-path dimmed')
+            : 'bracket-svg-path';
+
+          const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+          pathsHtml += `<path d="${d}" class="${cls}" />`;
+        }
+      }
+
+      svg.innerHTML = pathsHtml;
+    }
+
+    function onHoverTeam(teamName) {
+      if (!teamName || teamName === 'BYE') {
+        hoveredTeamName = null;
+      } else {
+        hoveredTeamName = teamName;
+      }
+
+      const cards = document.querySelectorAll('.match-card-item');
+      cards.forEach(card => {
+        const p1 = card.getAttribute('data-p1');
+        const p2 = card.getAttribute('data-p2');
+        if (hoveredTeamName && (p1 === hoveredTeamName || p2 === hoveredTeamName)) {
+          card.classList.add('team-hovered');
+        } else {
+          card.classList.remove('team-hovered');
+        }
+      });
+
+      drawBracketSvgConnectors();
+    }
+
+    window.addEventListener('resize', () => {
+      if (appState.activeTab === 'tournament') {
+        drawBracketSvgConnectors();
+      }
+    });
+
+    // ==========================================
+    // ARENA TV PROJECTOR MODE (AUDIO, CONFETTI, QR)
+    // ==========================================
+    function getAllActiveTournamentMatches() {
+      const format = appState.tournament.generatedFormat || appState.tournament.format;
+      const list = [];
+
+      if (format === 'single' && appState.tournament.singleElim) {
+        appState.tournament.singleElim.rounds.forEach((roundMatches, rIdx) => {
+          const stage = getRoundTitle(roundMatches.length, rIdx);
+          roundMatches.forEach((m, mIdx) => {
+            if (!m.isBye && (m.p1 || m.p2)) {
+              list.push({
+                key: `single:${rIdx}:${mIdx}`,
+                stage,
+                t1: m.p1 || 'TBD',
+                t2: m.p2 || 'TBD',
+                s1: m.s1 || 0,
+                s2: m.s2 || 0,
+                elo1: m.preElo1 || 1000,
+                elo2: m.preElo2 || 1000
+              });
+            }
+          });
+        });
+      } else if (format === 'swiss' && appState.tournament.swiss) {
+        appState.tournament.swiss.rounds.forEach((r, rIdx) => {
+          r.matches.forEach((m, mIdx) => {
+            if (!m.isBye) {
+              list.push({
+                key: `swiss:${rIdx}:${mIdx}`,
+                stage: `Швейцарский Тур ${r.roundNumber}`,
+                t1: m.t1,
+                t2: m.t2,
+                s1: m.s1 || 0,
+                s2: m.s2 || 0,
+                elo1: m.preElo1 || 1000,
+                elo2: m.preElo2 || 1000
+              });
+            }
+          });
+        });
+      } else if (format === 'roundrobin' && appState.tournament.roundRobin) {
+        appState.tournament.roundRobin.rounds.forEach((r, rIdx) => {
+          r.matches.forEach((m, mIdx) => {
+            list.push({
+              key: `rr:${rIdx}:${mIdx}`,
+              stage: `Круговой Тур ${r.roundNumber}`,
+              t1: m.t1,
+              t2: m.t2,
+              s1: m.s1 || 0,
+              s2: m.s2 || 0,
+              elo1: m.preElo1 || 1000,
+              elo2: m.preElo2 || 1000
+            });
+          });
+        });
+      }
+      return list;
+    }
+
+    function openArenaModal() {
+      const modal = document.getElementById('arena-tv-modal');
+      modal.classList.remove('hidden');
+      populateArenaMatchSelector();
+      renderArenaQRCode();
+    }
+
+    function closeArenaModal() {
+      const modal = document.getElementById('arena-tv-modal');
+      modal.classList.add('hidden');
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function toggleNativeFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function populateArenaMatchSelector() {
+      const sel = document.getElementById('arena-match-selector');
+      const matches = getAllActiveTournamentMatches();
+      if (matches.length === 0) {
+        sel.innerHTML = `<option value="">Нет активных матчей</option>`;
+        return;
+      }
+
+      if (!selectedArenaMatchKey || !matches.some(m => m.key === selectedArenaMatchKey)) {
+        selectedArenaMatchKey = matches[matches.length - 1].key;
+      }
+
+      sel.innerHTML = matches.map(m => `
+        <option value="${m.key}" ${m.key === selectedArenaMatchKey ? 'selected' : ''}>
+          [${escapeHtml(m.stage)}] ${escapeHtml(m.t1)} vs ${escapeHtml(m.t2)}
+        </option>
+      `).join('');
+
+      onArenaMatchSelect(selectedArenaMatchKey);
+    }
+
+    function onArenaMatchSelect(key) {
+      selectedArenaMatchKey = key;
+      const matches = getAllActiveTournamentMatches();
+      const found = matches.find(m => m.key === key) || matches[0];
+      if (!found) return;
+
+      document.getElementById('arena-match-stage').textContent = found.stage;
+      document.getElementById('arena-team1-name').textContent = found.t1;
+      document.getElementById('arena-team2-name').textContent = found.t2;
+      document.getElementById('arena-team1-elo').textContent = `${Math.round(found.elo1)} ELO`;
+      document.getElementById('arena-team2-elo').textContent = `${Math.round(found.elo2)} ELO`;
+      document.getElementById('arena-score1').textContent = found.s1 === '' ? 0 : found.s1;
+      document.getElementById('arena-score2').textContent = found.s2 === '' ? 0 : found.s2;
+
+      const prob1 = Math.round(calcWinProbability(found.elo1, found.elo2) * 100);
+      const prob2 = 100 - prob1;
+      document.getElementById('arena-prob1-text').textContent = `${prob1}% шанс победы`;
+      document.getElementById('arena-prob2-text').textContent = `${prob2}% шанс победы`;
+      document.getElementById('arena-prob1-bar').style.width = `${prob1}%`;
+      document.getElementById('arena-prob2-bar').style.width = `${prob2}%`;
+    }
+
+    function adjustArenaScore(slot, delta) {
+      if (!selectedArenaMatchKey) return;
+      const [mode, rStr, mStr] = selectedArenaMatchKey.split(':');
+      const rIdx = parseInt(rStr, 10);
+      const mIdx = parseInt(mStr, 10);
+
+      if (mode === 'single') {
+        const m = appState.tournament.singleElim.rounds[rIdx][mIdx];
+        const cur = parseInt(slot === 1 ? m.s1 : m.s2, 10) || 0;
+        const next = Math.max(0, cur + delta);
+        updateBracketScore(rIdx, mIdx, slot, String(next));
+      } else if (mode === 'swiss') {
+        const m = appState.tournament.swiss.rounds[rIdx].matches[mIdx];
+        const cur = parseInt(slot === 1 ? m.s1 : m.s2, 10) || 0;
+        const next = Math.max(0, cur + delta);
+        updateSwissScore(rIdx, mIdx, slot, String(next));
+      } else if (mode === 'rr') {
+        const m = appState.tournament.roundRobin.rounds[rIdx].matches[mIdx];
+        const cur = parseInt(slot === 1 ? m.s1 : m.s2, 10) || 0;
+        const next = Math.max(0, cur + delta);
+        updateRoundRobinScore(rIdx, mIdx, slot, String(next));
+      }
+
+      onArenaMatchSelect(selectedArenaMatchKey);
+      renderArenaQRCode();
+    }
+
+    // ---- COUNTDOWN TIMER & WEB AUDIO API BUZZER ----
+    function formatArenaTimer(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function toggleArenaTimer() {
+      const btn = document.getElementById('arena-timer-btn');
+      if (arenaTimerInterval) {
+        clearInterval(arenaTimerInterval);
+        arenaTimerInterval = null;
+        btn.textContent = '▶ Старт';
+      } else {
+        btn.textContent = '⏸ Пауза';
+        arenaTimerInterval = setInterval(() => {
+          if (arenaTimerSeconds > 0) {
+            arenaTimerSeconds--;
+            document.getElementById('arena-timer-display').textContent = formatArenaTimer(arenaTimerSeconds);
+            if (arenaTimerSeconds === 0) {
+              clearInterval(arenaTimerInterval);
+              arenaTimerInterval = null;
+              btn.textContent = '▶ Старт';
+              playArenaBuzzer();
+            }
+          }
+        }, 1000);
+      }
+    }
+
+    function resetArenaTimer(seconds) {
+      if (arenaTimerInterval) {
+        clearInterval(arenaTimerInterval);
+        arenaTimerInterval = null;
+        document.getElementById('arena-timer-btn').textContent = '▶ Старт';
+      }
+      arenaTimerSeconds = seconds;
+      document.getElementById('arena-timer-display').textContent = formatArenaTimer(arenaTimerSeconds);
+    }
+
+    function playArenaBuzzer() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        // Dual-oscillator stadium horn sound
+        [145, 220, 290].forEach(freq => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.15);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.2);
+        });
+      } catch (e) {
+        console.warn('Web Audio API error:', e);
+      }
+    }
+
+    function triggerConfettiCelebration() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 110,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function renderArenaQRCode() {
+      const box = document.getElementById('arena-qrcode-box');
+      if (!box || typeof QRCode === 'undefined') return;
+      box.innerHTML = '';
+
+      // Build concise ASCII/UTF-8 standings summary for QR
+      const ratings = appState.tournament.liveRatings || {};
+      const sorted = Object.entries(ratings)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([name, r], i) => `${i + 1}. ${name}: ${Math.round(r)} ELO`)
+        .join('\n');
+
+      const qrPayload = `TOP ELO STANDINGS:\n${sorted || 'No matches played'}`;
+      try {
+        new QRCode(box, {
+          text: unescape(encodeURIComponent(qrPayload)),
+          width: 112,
+          height: 112,
+          colorDark: '#020617',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      } catch (e) {
+        box.innerHTML = `<div class="text-[10px] text-slate-900 p-2">QR Ready</div>`;
+      }
+    }
+
+    // ==========================================
+    // EXPORT TOURNAMENT (PNG & CSV)
+    // ==========================================
+    async function exportTournamentPNG() {
+      const target = document.getElementById('tournament-capture-area');
+      const btn = document.getElementById('btn-export-png');
+      if (!target || typeof html2canvas === 'undefined') return;
+
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<span>Создание PNG...</span>`;
+      btn.disabled = true;
+
+      try {
+        const canvas = await html2canvas(target, {
+          backgroundColor: '#0f172a',
+          scale: 2,
+          useCORS: true,
+          windowWidth: target.scrollWidth + 60
+        });
+        const link = document.createElement('a');
+        link.download = `tournament_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('PNG изображение турнирной сетки сохранено');
+      } catch (err) {
+        showToast('Не удалось создать PNG', 'warn');
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function exportTournamentCSV() {
+      const format = appState.tournament.generatedFormat || appState.tournament.format;
+      const rows = [];
+
+      rows.push(['РЕЙТИНГИ КОМАНД (ELO)']);
+      rows.push(['Команда', 'Стартовый Elo', 'Текущий Elo', 'Дельта']);
+      Object.entries(appState.tournament.liveRatings || {}).forEach(([name, cur]) => {
+        const base = appState.tournament.baseRatings[name] || 1000;
+        rows.push([name, base, Math.round(cur), Math.round(cur - base)]);
+      });
+      rows.push([]);
+
+      if (format === 'single' && appState.tournament.singleElim) {
+        rows.push(['ОЛИМПИЙСКАЯ СЕТКА']);
+        rows.push(['Стадия', 'Матч #', 'Команда 1', 'Счёт 1', 'Счёт 2', 'Команда 2', 'Победитель']);
+        const se = appState.tournament.singleElim;
+        se.rounds.forEach((rm, rIdx) => {
+          const title = getRoundTitle(rm.length, rIdx);
+          rm.forEach((m, mIdx) => {
+            const win = m.winner === 1 ? m.p1 : (m.winner === 2 ? m.p2 : '');
+            rows.push([title, mIdx + 1, m.p1 || 'TBD', m.s1, m.s2, m.p2 || 'TBD', win]);
+          });
+        });
+      } else if (format === 'swiss' && appState.tournament.swiss) {
+        rows.push(['ТАБЛИЦА ШВЕЙЦАРСКОЙ СИСТЕМЫ']);
+        rows.push(['Место', 'Команда', 'Победы', 'Поражения', 'Бухгольц', 'Очки']);
+        computeSwissStandings(appState.tournament.swiss).forEach((s, idx) => {
+          rows.push([idx + 1, s.team, s.won, s.lost, s.buchholz, s.points]);
+        });
+      } else if (appState.tournament.roundRobin) {
+        rows.push(['ТАБЛИЦА КРУГОВОГО ТУРНИРА']);
+        rows.push(['Место', 'Команда', 'Игры', 'Победы', 'Ничьи', 'Поражения', 'Очки']);
+        computeRoundRobinStandings(appState.tournament.roundRobin).forEach((s, idx) => {
+          rows.push([idx + 1, s.team, s.played, s.won, s.drawn, s.lost, s.points]);
+        });
+      }
+
+      downloadCSV(`esports_tournament_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      showToast('CSV отчёт успешно скачан');
+    }
+
+    // ==========================================
+    // MODE 2: SMART DUTY ROSTER GENERATOR LOGIC
+    // ==========================================
+    function onDutyInputChange() {
+      appState.duty.rawStudents = document.getElementById('duty-students-input').value;
+      appState.duty.daysCount = Math.max(1, Math.min(90, parseInt(document.getElementById('duty-days-input').value, 10) || 14));
+      appState.duty.perShift = Math.max(1, Math.min(15, parseInt(document.getElementById('duty-per-shift-input').value, 10) || 2));
+      appState.duty.startDate = document.getElementById('duty-start-date').value;
+      appState.duty.excludeSunday = document.getElementById('duty-exclude-sunday').checked;
+      updateStudentCountBadge();
+      saveState();
+    }
+
+    function updateStudentCountBadge() {
+      const count = parseLines(document.getElementById('duty-students-input').value).length;
+      document.getElementById('student-count-badge').textContent = `${count} уч.`;
+    }
+
+    function loadDemoStudents() {
+      document.getElementById('duty-students-input').value = DEMO_STUDENTS.join('\n');
+      onDutyInputChange();
+      generateDutyRoster();
+      showToast('Загружен демо-список учеников класса');
+    }
+
+    function generateDutyRoster(silent = false) {
+      onDutyInputChange();
+      let students = parseLines(appState.duty.rawStudents);
+
+      const seen = new Map();
+      students = students.map(name => {
+        const c = seen.get(name) || 0;
+        seen.set(name, c + 1);
+        return c === 0 ? name : `${name} (${c + 1})`;
+      });
+
+      const daysCount = appState.duty.daysCount;
+      const perShift = Math.min(appState.duty.perShift, students.length);
+
+      if (students.length === 0) {
+        if (!silent) showToast('Введите список учеников для расчёта дежурств', 'warn');
+        return;
+      }
+
+      const counts = {};
+      const lastAssignedShift = {};
+      students.forEach(s => {
+        counts[s] = 0;
+        lastAssignedShift[s] = -10;
+      });
+
+      const schedule = [];
+      let prevShiftSet = new Set();
+
+      const startParts = (appState.duty.startDate || '').split('-').map(Number);
+      let cursorDate = (startParts.length === 3 && !isNaN(startParts[0]))
+        ? new Date(startParts[0], startParts[1] - 1, startParts[2])
+        : new Date();
+
+      for (let d = 0; d < daysCount; d++) {
+        while (appState.duty.excludeSunday && cursorDate.getDay() === 0) {
+          cursorDate.setDate(cursorDate.getDate() + 1);
+        }
+
+        const chosen = [];
+        const chosenSet = new Set();
+        const nonConsecutivePool = students.filter(s => !prevShiftSet.has(s));
+
+        const sortCandidates = (pool, shiftStep) => {
+          return [...pool].sort((a, b) => {
+            if (counts[a] !== counts[b]) return counts[a] - counts[b];
+            if (lastAssignedShift[a] !== lastAssignedShift[b]) return lastAssignedShift[a] - lastAssignedShift[b];
+            const idxA = (students.indexOf(a) + shiftStep) % students.length;
+            const idxB = (students.indexOf(b) + shiftStep) % students.length;
+            return idxA - idxB;
+          });
+        };
+
+        const sortedPrimary = sortCandidates(nonConsecutivePool, d);
+        for (const candidate of sortedPrimary) {
+          if (chosen.length < perShift) {
+            chosen.push(candidate);
+            chosenSet.add(candidate);
+          }
+        }
+
+        if (chosen.length < perShift) {
+          const remainingPool = students.filter(s => !chosenSet.has(s));
+          const sortedFallback = sortCandidates(remainingPool, d);
+          for (const candidate of sortedFallback) {
+            if (chosen.length < perShift) {
+              chosen.push(candidate);
+              chosenSet.add(candidate);
+            }
+          }
+        }
+
+        chosen.forEach(s => {
+          counts[s]++;
+          lastAssignedShift[s] = d;
+        });
+
+        const dd = String(cursorDate.getDate()).padStart(2, '0');
+        const mm = String(cursorDate.getMonth() + 1).padStart(2, '0');
+        const yyyy = cursorDate.getFullYear();
+        const dayOfWeek = cursorDate.getDay();
+
+        schedule.push({
+          shiftIndex: d + 1,
+          dateFormatted: `${dd}.${mm}.${yyyy}`,
+          dayName: DAY_NAMES_RU[dayOfWeek],
+          dayShort: DAY_SHORT_RU[dayOfWeek],
+          isSaturday: dayOfWeek === 6,
+          students: chosen,
+          status: 'По плану',
+          note: ''
+        });
+
+        prevShiftSet = chosenSet;
+        cursorDate.setDate(cursorDate.getDate() + 1);
+      }
+
+      appState.duty.schedule = schedule;
+      appState.duty.counts = counts;
+      saveState();
+      renderDutyRoster();
+      if (!silent) showToast('График дежурств успешно сформирован');
+    }
+
+    function updateDutyStatus(idx, field, val) {
+      const item = appState.duty.schedule[idx];
+      if (!item) return;
+      item[field] = val;
+      saveState();
+    }
+
+    function renderDutyRoster() {
+      const tbody = document.getElementById('duty-table-body');
+      const summaryGrid = document.getElementById('duty-summary-grid');
+      const fairnessIndicator = document.getElementById('duty-fairness-indicator');
+      const printSubtitle = document.getElementById('print-subtitle-date');
+
+      const schedule = appState.duty.schedule || [];
+      const counts = appState.duty.counts || {};
+
+      if (schedule.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-slate-500">Нажмите «Сформировать график» для генерации расписания</td></tr>`;
+        summaryGrid.innerHTML = '';
+        return;
+      }
+
+      if (printSubtitle && schedule.length > 0) {
+        printSubtitle.textContent = `Период: ${schedule[0].dateFormatted} — ${schedule[schedule.length - 1].dateFormatted} | Всего смен: ${schedule.length}`;
+      }
+
+      tbody.innerHTML = schedule.map((row, idx) => {
+        const studentBadges = row.students.map(st => `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-950 text-slate-200 border border-slate-800">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+            ${escapeHtml(st)}
+          </span>
+        `).join('');
+
+        return `
+          <tr class="hover:bg-slate-950/40 transition">
+            <td class="py-3 px-4 font-mono text-xs text-slate-400">${row.shiftIndex}</td>
+            <td class="py-3 px-4">
+              <div class="font-medium text-slate-200 text-xs sm:text-sm">${escapeHtml(row.dateFormatted)}</div>
+              <div class="text-xs ${row.isSaturday ? 'text-amber-400' : 'text-slate-400'}">${escapeHtml(row.dayName)}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex flex-wrap gap-1.5">${studentBadges}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-1.5">
+                <select
+                  onchange="updateDutyStatus(${idx}, 'status', this.value)"
+                  class="rounded bg-slate-950 border border-slate-800 text-xs text-slate-200 px-2 py-1 focus:border-indigo-500 outline-none"
+                >
+                  <option value="По плану" ${row.status === 'По плану' ? 'selected' : ''}>По плану</option>
+                  <option value="Выполнено" ${row.status === 'Выполнено' ? 'selected' : ''}>Выполнено ✓</option>
+                  <option value="Замена" ${row.status === 'Замена' ? 'selected' : ''}>Замена ⇄</option>
+                  <option value="Перенос" ${row.status === 'Перенос' ? 'selected' : ''}>Перенос</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Заметка / ФИО замены..."
+                  value="${escapeHtml(row.note || '')}"
+                  oninput="updateDutyStatus(${idx}, 'note', this.value)"
+                  class="w-full rounded bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-600 px-2 py-1 focus:border-indigo-500 outline-none"
+                />
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const entries = Object.entries(counts);
+      const values = entries.map(e => e[1]);
+      const minVal = values.length ? Math.min(...values) : 0;
+      const maxVal = values.length ? Math.max(...values) : 0;
+      const diff = maxVal - minVal;
+
+      if (diff <= 1) {
+        fairnessIndicator.textContent = `Идеальный баланс (разброс ≤ 1: от ${minVal} до ${maxVal} смен)`;
+        fairnessIndicator.className = 'px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+      } else {
+        fairnessIndicator.textContent = `Разброс: от ${minVal} до ${maxVal} смен`;
+        fairnessIndicator.className = 'px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30';
+      }
+
+      summaryGrid.innerHTML = entries.map(([name, count]) => `
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950 border border-slate-800/90 text-xs">
+          <span class="truncate text-slate-300 pr-2" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+          <span class="px-2 py-0.5 rounded font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0">
+            ${count} см.
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function exportDutyCSV() {
+      const schedule = appState.duty.schedule || [];
+      if (schedule.length === 0) return;
+
+      const rows = [
+        ['Смена #', 'Дата', 'День недели', 'Дежурные', 'Статус', 'Примечание / Замена']
+      ];
+
+      schedule.forEach(item => {
+        rows.push([
+          item.shiftIndex,
+          item.dateFormatted,
+          item.dayName,
+          item.students.join(', '),
+          item.status,
+          item.note || ''
+        ]);
+      });
+
+      rows.push([]);
+      rows.push(['СВОДКА ПО УЧЕНИКАМ (КОНТРОЛЬ РАВНОМЕРНОСТИ)']);
+      rows.push(['Ученик', 'Всего смен']);
+      Object.entries(appState.duty.counts || {}).forEach(([student, count]) => {
+        rows.push([student, count]);
+      });
+
+      downloadCSV(`duty_roster_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      showToast('CSV файл графика дежурств (для Excel) скачан');
+    }
+
+    // ==========================================
+    // BOOTSTRAP ON DOM READY
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const hadSaved = loadState();
+      syncInputsFromState();
+
+      if (!hadSaved || (!appState.tournament.singleElim && !appState.tournament.roundRobin && !appState.tournament.swiss)) {
+        generateTournament(true);
+      } else {
+        recalculateAllEloAndAnalytics();
+        renderTournament();
+        renderEloEditorList();
+      }
+
+      if (!hadSaved || !appState.duty.schedule || appState.duty.schedule.length === 0) {
+        generateDutyRoster(true);
+      } else {
+        renderDutyRoster();
+      }
+
+      switchTab(appState.activeTab || 'tournament');
+    });
+  </script>
+</body>
+</html>
